@@ -1,0 +1,124 @@
+#!/usr/bin/python3
+
+# Import necessary libraries
+import socket
+import sys
+import getopt
+import ssl
+
+def main(argv):
+	# parse arguments and flags
+	try:
+		opts, args = getopt.getopt(argv, 'p:s')
+	except getopt.GetoptError:
+		print('Invalid Input')
+		sys.exit()
+
+	if len(args) != 2:
+		print('Invalid Input')
+		sys.exit()
+
+	# set up variables and socket
+	sslcontext = ssl.create_default_context()
+	sslcontext.check_hostname = False
+	sslcontext.verify_mode = ssl.CERT_NONE
+	port = 27995
+	hostname = args[0]
+	nuid = args[1]
+	port = 27995
+	secure = False
+	for opt, arg in opts:
+		if opt == '-s':
+			secure = True
+			port = 27996
+		elif opt == '-p':
+			port = arg
+			
+	for opt, arg in opts:
+		if opt == '-p':
+			port = int(arg)
+		
+	# create socket
+	try:
+		sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+		if secure:
+			ssock = sslcontext.wrap_socket(sock, server_hostname=hostname)
+	except socket.error:
+		print('Error: Failed to create socket')
+		sys.exit(1)
+	try:
+		remote_ip = socket.gethostbyname( hostname )
+	except socket.gaierror:
+		print('Error: Hostname could not be resolved. Exiting')
+		sys.exit(1)
+	if secure:
+		mySock = ssock
+	else:
+		mySock = sock
+
+	# method to send a message to the server
+	def sendMessage( message ):
+		"This sends a message to the server"
+		try:
+			mySock.sendall(message.encode())
+		except socket.error:
+			print('Send failed')
+			sys.exit(1)
+		return 
+
+	# method to recieve a message from the server
+	def recieveMessage():
+		"This recieves a message from the server"
+		total_data = []
+		data = b''
+		while True:
+			data = mySock.recv(8192)
+			if b'\n' in data:
+				total_data.append(data[:data.find(b'\n')])
+				break
+			total_data.append(data)
+			if len(total_data) > 1:
+				last_pair = total_data[-2] + total_data[-1]
+				if b'\n' in last_pair:
+					total_data[-2] = last_pair[:last_pair.find(b'\n')]
+					total_data.pop()
+					break
+		return b''.join(total_data).decode().split()
+
+	# Connect to remote server
+	try:
+		if secure:
+			ssock.connect((remote_ip, port))
+		else:
+			sock.connect((remote_ip, port))	
+	except:
+		print('Error Connecting to Host: ' + remote_ip + ' on port ' + str(port))
+		sys.exit(1)
+
+	# logic to find the secret code
+	message = 'cs3700spring2021 HELLO ' + nuid + '\n'	
+	sendMessage(message)
+	while True:
+		data = recieveMessage()
+		try:
+			messageType = data[1]
+		except:
+			print('Error: Corrupted data recieved from server')
+			print(data)
+			break
+		if messageType == 'FIND':
+			count = data[3].count(data[2])
+			message = 'cs3700spring2021 COUNT ' + str(count) + '\n'
+			sendMessage(message)
+			continue
+		elif messageType == 'BYE':
+			secretCode = data[2]
+			print(secretCode)
+			break
+		else:
+			print('Error: Unknown Message Type [ ' + messageType + ' ] encountered')
+			break
+	sock.close()	
+
+if __name__ == '__main__':
+	main(sys.argv[1:])
