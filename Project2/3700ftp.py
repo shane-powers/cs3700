@@ -57,7 +57,7 @@ def main(argv):
 						output[2] = hostPort[0]
 				elif len(payload) == 1:
 					# only host and port
-					hostPort = payload[1].split(":")
+					hostPort = payload[0].split(":")
 					if len(hostPort) > 2:
 						print("bad formed url")
 						return []
@@ -76,78 +76,92 @@ def main(argv):
 			return []
 
 	
-	parsedParam1 = parseURL(param1)
-	parsedParam2 = parseURL(param2)
+	param1URL = parseURL(param1)
+	param2URL = parseURL(param2)
 	
-	if parsedParam1 and parsedParam2:
+	if param1URL and param2URL:
 		print("Error: Recieved two FTP params")
 		exit(1)
-	if not parsedParam1 and not parsedParam2:
+	if not param1URL and not param2URL:
 		print("Error: Did not recieve an FTP param")
 		exit(1)
 
-	if parsedParam1:
-		username = parsedParam1[0]
-		password = parsedParam1[1]
-		host = parsedParam1[2]
-		port = parsedParam1[3]
-		path = parsedParam1[4]
+	if param1URL:
+		username = param1URL[0]
+		password = param1URL[1]
+		hostname = param1URL[2]
+		port = param1URL[3]
+		path = param1URL[4]
 	else:
-		username = parsedParam2[0]
-		password = parsedParam2[1]
-		host = parsedParam2[2]
-		port = parsedParam2[3]
-		path = parsedParam2[4]
+		username = param2URL[0]
+		password = param2URL[1]
+		hostname = param2URL[2]
+		port = param2URL[3]
+		path = param2URL[4]
 
-	# # create socket
-	# try:
-	# 	sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-	# except socket.error:
-	# 	print('Error: Failed to create socket')
-	# 	sys.exit(1)
-	# try:
-	# 	remote_ip = socket.gethostbyname( hostname )
-	# except socket.gaierror:
-	# 	print('Error: Hostname could not be resolved. Exiting')
-	# 	sys.exit(1)
+	# create socket
+	try:
+		sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+	except socket.error:
+		print('Error: Failed to create socket')
+		sys.exit(1)
+	try:
+		remote_ip = socket.gethostbyname( hostname )
+	except socket.gaierror:
+		print('Error: Hostname could not be resolved. Exiting')
+		sys.exit(1)
 
-	# mySock = sock
+	mySock = sock
 
-	# # method to send a message to the server
-	# def sendMessage( message ):
-	# 	"This sends a message to the server"
-	# 	try:
-	# 		mySock.sendall(message.encode())
-	# 	except socket.error:
-	# 		print('Send failed')
-	# 		sys.exit(1)
-	# 	return 
+	# method to send a message to the server
+	def sendMessage( message ):
+		"This sends a message to the server"
+		try:
+			mySock.sendall(message.encode())
+		except socket.error:
+			print('Send failed')
+			sys.exit(1)
+		return 
 
-	# # method to recieve a message from the server
-	# def recieveMessage():
-	# 	"This recieves a message from the server"
-	# 	total_data = []
-	# 	data = b''
-	# 	while True:
-	# 		data = mySock.recv(8192)
-	# 		if b'\n' in data:
-	# 			total_data.append(data[:data.find(b'\n')])
-	# 			break
-	# 		total_data.append(data)
-	# 		if len(total_data) > 1:
-	# 			last_pair = total_data[-2] + total_data[-1]
-	# 			if b'\n' in last_pair:
-	# 				total_data[-2] = last_pair[:last_pair.find(b'\n')]
-	# 				total_data.pop()
-	# 				break
-	# 	return b''.join(total_data).decode().split()
+	# method to recieve a message from the server
+	def recieveMessage():
+		"This recieves a message from the server"
+		total_data = []
+		data = b''
+		while True:
+			data = mySock.recv(8192)
+			if b'\n' in data:
+				total_data.append(data[:data.find(b'\n')])
+				break
+			total_data.append(data)
+			if len(total_data) > 1:
+				last_pair = total_data[-2] + total_data[-1]
+				if b'\n' in last_pair:
+					total_data[-2] = last_pair[:last_pair.find(b'\n')]
+					total_data.pop()
+					break
+		return b''.join(total_data).decode().split()
 
-	# # Connect to remote server
-	# try:
-	# 	sock.connect((remote_ip, port))	
-	# except:
-	# 	print('Error Connecting to Host: ' + remote_ip + ' on port ' + str(port))
-	# 	sys.exit(1)
+	def getResponse():
+		response = recieveMessage()
+		print(response)
+		responseCode = response[0]
+		if responseCode >= 100 and responseCode < 200:
+			print("more action is expected")
+		elif responseCode >= 200 and responseCode < 300:
+			print("success")
+		elif responseCode >= 300 and responseCode < 400:
+			print("preliminary success, another action required")
+		else:
+			print("an error has occured")
+			exit(1)
+
+	# Connect to remote server
+	try:
+		sock.connect((remote_ip, port))	
+	except:
+		print('Error Connecting to Host: ' + remote_ip + ' on port ' + str(port))
+		sys.exit(1)
 
 	# # # logic to find the secret code
 	# # message = 'cs3700spring2021 HELLO ' + nuid + '\n'	
@@ -173,16 +187,21 @@ def main(argv):
 	# # 		print('Error: Unknown Message Type [ ' + messageType + ' ] encountered')
 	# # 		break
 	# # sock.close()	
-	def sendMessage(string):
-		print(string)
+	# def sendMessage(string):
+	# 	print(string)
 
 	def initializeFTP():
 		sendMessage("USER " + username + "\r\n")
+		getResponse()
 		if password != "":
 			sendMessage("PASS " + password + "\r\n")
+			getResponse()
 		sendMessage("TYPE I\r\n")
+		getResponse()
 		sendMessage("MODE S\r\n")
+		getResponse()
 		sendMessage("STRU F\r\n")
+		getResponse()
 
 	def uploadFile( path ):
 		sendMessage("STOR " + path + "\r\n")
@@ -197,17 +216,33 @@ def main(argv):
 		sendMessage("QUIT\r\n")
 
 	if operation.lower() == "ls":
-		initializeFTP()
-		sendMessage("LIST " + path + "\r\n")
+		if param1URL:
+			initializeFTP()
+			sendMessage("LIST " + path + "\r\n")
+		else: 
+			print("invalid params for ls")
+			exit(1)
 	elif operation.lower() == "mkdir":
-		initializeFTP()
-		sendMessage("MKD " + path + "\r\n")
+		if param1URL:
+			initializeFTP()
+			sendMessage("MKD " + path + "\r\n")
+		else: 
+			print("invalid params for mkdir")
+			exit(1)
 	elif operation.lower() == "rm":
-		initializeFTP()
-		sendMessage("DELE " + path + "\r\n")
+		if param1URL:
+			initializeFTP()
+			sendMessage("DELE " + path + "\r\n")
+		else: 
+			print("invalid params for rm")
+			exit(1)
 	elif operation.lower() == "rmdir":
-		initializeFTP()
-		sendMessage("RMD " + path + "\r\n")
+		if param1URL:
+			initializeFTP()
+			sendMessage("RMD " + path + "\r\n")
+		else: 
+			print("invalid params for rmdir")
+			exit(1)
 	elif operation.lower() == "cp":
 		print("copying")
 	elif operation.lower() == "mv":
