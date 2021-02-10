@@ -145,7 +145,7 @@ def main(argv):
 	def getResponse():
 		response = recieveMessage()
 		print(response)
-		responseCode = response[0]
+		responseCode = int(response[0])
 		if responseCode >= 100 and responseCode < 200:
 			print("more action is expected")
 		elif responseCode >= 200 and responseCode < 300:
