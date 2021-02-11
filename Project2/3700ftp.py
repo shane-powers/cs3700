@@ -224,7 +224,23 @@ def main(argv):
 			print("invalid params for ls")
 			exit(1)
 	elif operation.lower() == "cp":
-		print("copying")
+		initializeFTP(sock)
+		if param1URL:
+			dataSocket = openDataSocket(sock)
+			sendMessage(sock, "RETR " + path + "\r\n")
+			content = recieveData(dataSocket)
+			dataSocket.close()
+			f = open(param2, "w")
+			f.write(content)
+			f.close()
+		else:
+			f = open(param1, "r")
+			content = f.read()
+			f.close()
+			dataSocket = openDataSocket(sock)
+			sendMessage(sock, "STOR " + path + "\r\n")
+			sendMessage(dataSocket, content)
+			dataSocket.close()
 	elif operation.lower() == "mv":
 		print("moving")
 	else:
