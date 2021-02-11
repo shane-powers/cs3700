@@ -111,13 +111,12 @@ def main(argv):
 		print('Error: Hostname could not be resolved. Exiting')
 		sys.exit(1)
 
-	mySock = sock
 
 	# method to send a message to the server
 	def sendMessage( message ):
 		"This sends a message to the server"
 		try:
-			mySock.sendall(message.encode())
+			sock.sendall(message.encode())
 		except socket.error:
 			print('Send failed')
 			sys.exit(1)
@@ -129,7 +128,7 @@ def main(argv):
 		total_data = []
 		data = b''
 		while True:
-			data = mySock.recv(8192)
+			data = sock.recv(8192)
 			if b'\n' in data:
 				total_data.append(data[:data.find(b'\n')])
 				break
@@ -140,20 +139,20 @@ def main(argv):
 					total_data[-2] = last_pair[:last_pair.find(b'\n')]
 					total_data.pop()
 					break
-		return b''.join(total_data).decode().split()
+		return b''.join(total_data).decode()
 
 	def getResponse():
 		response = recieveMessage()
 		print(response)
-		responseCode = int(response[0])
+		responseCode = int(response.split()[0])
 		if responseCode >= 100 and responseCode < 200:
-			print("more action is expected")
+			# good
 		elif responseCode >= 200 and responseCode < 300:
-			print("success")
+			# good
 		elif responseCode >= 300 and responseCode < 400:
-			print("preliminary success, another action required")
+			# good
 		else:
-			print("an error has occured")
+			print("exiting")
 			exit(1)
 
 	# Connect to remote server
@@ -163,33 +162,6 @@ def main(argv):
 		print('Error Connecting to Host: ' + remote_ip + ' on port ' + str(port))
 		sys.exit(1)
 
-	# # # logic to find the secret code
-	# # message = 'cs3700spring2021 HELLO ' + nuid + '\n'	
-	# # sendMessage(message)
-	# # while True:
-	# # 	data = recieveMessage()
-	# # 	try:
-	# # 		messageType = data[1]
-	# # 	except:
-	# # 		print('Error: Corrupted data recieved from server')
-	# # 		print(data)
-	# # 		break
-	# # 	if messageType == 'FIND':
-	# # 		count = data[3].count(data[2])
-	# # 		message = 'cs3700spring2021 COUNT ' + str(count) + '\n'
-	# # 		sendMessage(message)
-	# # 		continue
-	# # 	elif messageType == 'BYE':
-	# # 		secretCode = data[2]
-	# # 		print(secretCode)
-	# # 		break
-	# # 	else:
-	# # 		print('Error: Unknown Message Type [ ' + messageType + ' ] encountered')
-	# # 		break
-	# # sock.close()	
-	# def sendMessage(string):
-	# 	print(string)
-
 	def initializeFTP():
 		sendMessage("USER " + username + "\r\n")
 		if password != "":
@@ -197,7 +169,6 @@ def main(argv):
 		sendMessage("TYPE I\r\n")
 		sendMessage("MODE S\r\n")
 		sendMessage("STRU F\r\n")
-		
 
 	def uploadFile( path ):
 		sendMessage("STOR " + path + "\r\n")
@@ -211,33 +182,29 @@ def main(argv):
 	def closeConnection():
 		sendMessage("QUIT\r\n")
 
+	initializeFTP()
+
 	if operation.lower() == "ls":
 		if param1URL:
-			initializeFTP()
 			sendMessage("LIST " + path + "\r\n")
 		else: 
 			print("invalid params for ls")
 			exit(1)
 	elif operation.lower() == "mkdir":
 		if param1URL:
-			initializeFTP()
 			sendMessage("MKD " + path + "\r\n")
-			getResponse()
 		else: 
 			print("invalid params for mkdir")
 			exit(1)
 	elif operation.lower() == "rm":
 		if param1URL:
-			initializeFTP()
 			sendMessage("DELE " + path + "\r\n")
 		else: 
 			print("invalid params for rm")
 			exit(1)
 	elif operation.lower() == "rmdir":
 		if param1URL:
-			initializeFTP()
 			sendMessage("RMD " + path + "\r\n")
-			getResponse()
 		else: 
 			print("invalid params for rmdir")
 			exit(1)
@@ -249,20 +216,8 @@ def main(argv):
 		print("Error: Operation not recognized")
 		exit(1)
 
-	
-	
-
-	
-
-	
-
-	
-		
-	
-
-	
-
-	
+	sock.close()
+	exit(0)
 
 if __name__ == '__main__':
 	main(sys.argv[1:])
