@@ -140,8 +140,16 @@ def main(argv):
 					break
 		return b''.join(total_data).decode()
 
+	def sendMessageNoResponse(sock, message):
+		"This sends a message to the socket argument, not expecting a response"
+		try:
+			sock.sendall(message.encode())
+		except socket.error:
+			print('Send failed')
+			sys.exit(1)
+
 	def sendMessage( sock, message ):
-		"This sends a message to the socket argument"
+		"This sends a message to the socket argument, expecting a response"
 		try:
 			sock.sendall(message.encode())
 		except socket.error:
@@ -229,12 +237,10 @@ def main(argv):
 		else:
 			f = open(param1, "r")
 			content = f.read()
-			print("content is: " + content)
 			f.close()
 			print("Downloaded content from File")
 			dataSocket = openDataSocket(sock)
-			sendMessage(dataSocket, content)
-			closeConnection(dataSocket)
+			sendMessageNoResponse(dataSocket, content)
 			dataSocket.close()
 			print("Uploaded content to FTP")
 	elif operation.lower() == "mv":
