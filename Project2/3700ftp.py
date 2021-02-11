@@ -120,16 +120,22 @@ def main(argv):
 		data = b''
 		while True:
 			data = sock.recv(8192)
-			if b'\r\n' in data:
-				total_data.append(data[:data.find(b'\r\n')])
+			if data:
+				total_data.append(data)
+			else:
 				break
-			total_data.append(data)
-			if len(total_data) > 1:
-				last_pair = total_data[-2] + total_data[-1]
-				if b'\r\n' in last_pair:
-					total_data[-2] = last_pair[:last_pair.find(b'\r\n')]
-					total_data.pop()
-					break
+			# if b'\r\n' in data:
+			# 	total_data.append(data[:data.find(b'\r\n')])
+			# 	break
+			# total_data.append(data)
+			# if len(total_data) > 1:
+			# 	last_pair = total_data[-2] + total_data[-1]
+			# 	if b'\r\n' in last_pair:
+			# 		total_data[-2] = last_pair[:last_pair.find(b'\r\n')]
+			# 		total_data.pop()
+			# 		break
+			# if data == b'':
+			# 	break
 		return b''.join(total_data).decode()
 
 	def sendMessage( sock, message ):
@@ -207,7 +213,7 @@ def main(argv):
 	elif operation.lower() == "ls":
 		if param1URL:
 			initializeFTP(sock)
-			dataSocket = openDataSocket()
+			dataSocket = openDataSocket(sock)
 			sendMessage(sock, "LIST " + path + "\r\n")
 			recieved = recieveMessage(dataSocket)
 			print(recieved)
