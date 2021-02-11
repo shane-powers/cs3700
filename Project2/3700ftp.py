@@ -219,6 +219,7 @@ def main(argv):
 		if param1URL:
 			initializeFTP()
 			sendMessage("LIST " + path + "\r\n")
+			getResponse()
 		else: 
 			print("invalid params for ls")
 			exit(1)
@@ -226,6 +227,7 @@ def main(argv):
 		if param1URL:
 			initializeFTP()
 			sendMessage("MKD " + path + "\r\n")
+			getResponse()
 		else: 
 			print("invalid params for mkdir")
 			exit(1)
@@ -240,6 +242,7 @@ def main(argv):
 		if param1URL:
 			initializeFTP()
 			sendMessage("RMD " + path + "\r\n")
+			getResponse()
 		else: 
 			print("invalid params for rmdir")
 			exit(1)
