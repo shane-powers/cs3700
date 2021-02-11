@@ -218,7 +218,7 @@ def main(argv):
 		dataSocket = openDataSocket(sock)
 		data = sendMessage(sock, "RETR " + path + "\r\n")
 		if successCode(data):
-			content = sock.makefile().read(-1)
+			content = dataSocket.makefile().read(-1)
 			dataSocket.close()
 			print("Downloaded content from FTP")
 			return content
@@ -265,7 +265,7 @@ def main(argv):
 			if successCode(data):
 				content = dataSocket.makefile().read(-1)
 				dataSocket.close()
-				print(response)
+				print(content)
 			else:
 				print("Could not get LIST from " + path)
 		else: 
@@ -275,10 +275,13 @@ def main(argv):
 		initializeFTP(sock)
 		if param1URL:
 			content = downloadFromFTP(sock, path)
-			uploadToFile(param2, content)
+			if content:
+				uploadToFile(param2, content)
+			else:
+				print("no data recieved from FTP")
 		else:
 			if os.path.exists(param1):
-				content = dowloadFromFile(param1)
+				content = downloadFromFile(param1)
 				uploadToFTP(sock, path, content)
 			else:
 				print("The local file does not exist")
@@ -286,14 +289,17 @@ def main(argv):
 		initializeFTP(sock)
 		if param1URL:
 			content = downloadFromFTP(sock, path)
-			uploadToFile(param2, content)
-			#sendMessage(sock, "DELE " + path + "\r\n")
+			if content:
+				uploadToFile(param2, content)
+				sendMessage(sock, "DELE " + path + "\r\n")
+			else:
+				print("no data recieved from FTP")
 		else:
 			if os.path.exists(param1):
-				content = dowloadFromFile(param1)
+				content = downloadFromFile(param1)
 				uploadToFTP(sock, path, content)
-				#os.remove(param1)
-				#print("Deleted local file")
+				os.remove(param1)
+				print("Deleted local file")
 			else:
   				print("The local file does not exist")
 	else:
