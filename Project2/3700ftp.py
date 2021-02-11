@@ -115,12 +115,6 @@ def main(argv):
 			print('Error Connecting to Host: ' + ip + ' on port ' + str(port))
 			sys.exit(1)
 
-	def recieveData( sock ):
-		"This recieves a message from the socket argument until connection is closed"
-		all_data = sock.makefile().read(-1)
-		sock.close()
-		return all_data
-
 	def recieveMessage( sock ):
 		"This recieves a message from the socket argument until \\r\\n character met"
 		total_data = []
@@ -141,13 +135,17 @@ def main(argv):
 					break
 		return b''.join(total_data).decode()
 
-	def sendMessageNoResponse(sock, message):
-		"This sends a message to the socket argument, not expecting a response"
-		try:
-			sock.sendall(message.encode())
-		except socket.error:
-			print('Send failed')
-			sys.exit(1)
+	def successCode(response):
+		"returns true if code is a success, false otherwise"
+		code = int(response.split()[0])
+		if code >= 100 and code < 200:
+			return True
+		elif code >= 200 and code < 300:
+			return True
+		elif code >=300 and code < 400:
+			return False	
+		else:
+			return False
 
 	def sendMessage( sock, message ):
 		"This sends a message to the socket argument, expecting a response"
@@ -176,18 +174,64 @@ def main(argv):
 	def openDataSocket(sock):
 		"opens/returns a data socket from PASV command"
 		data = sendMessage(sock, "PASV\r\n")
-		startParen = data.find("(")
-		endParen = data.find(")")
-		ipAndPort = data[startParen+1:endParen].split(",")
-		dataIP = ".".join(ipAndPort[:4])
-		dataPort = (int(ipAndPort[4]) << 8) + int(ipAndPort[5])
-		dataSocket = createSocket()
-		connectSocket(dataSocket, dataIP, dataPort)
-		return dataSocket
+		if successCode(data):
+			startParen = data.find("(")
+			endParen = data.find(")")
+			ipAndPort = data[startParen+1:endParen].split(",")
+			dataIP = ".".join(ipAndPort[:4])
+			dataPort = (int(ipAndPort[4]) << 8) + int(ipAndPort[5])
+			dataSocket = createSocket()
+			connectSocket(dataSocket, dataIP, dataPort)
+			return dataSocket
+		else:
+			print("Could not send PASV")
 
 	def closeConnection(sock):
 		"closes the connection on socket argument"
 		sendMessage(sock, "QUIT\r\n")
+
+	def uploadToFTP(sock, path, content):
+		"Writes the provided content to the given path in the FTP"
+		dataSocket = openDataSocket(sock)
+		data = sendMessage(sock, "STOR " + path + "\r\n")
+		if successCode(data):
+			try:
+				dataSocket.sendall(content.encode())
+			except socket.error:
+				print('Send failed')
+				sys.exit(1)
+			finally:
+				dataSocket.close()
+				print("Uploaded content to FTP")
+		else:
+			print("Could not STOR to " + path)
+
+	def uploadToFile(path, content):
+		"Uploads the provided content to the given local file path"
+		f = open(path, "w")
+		f.write(content)
+		f.close()
+		print("Uploaded content to File")
+
+	def downloadFromFTP(sock, path):
+		"Downloads data from the provided socket and path"
+		dataSocket = openDataSocket(sock)
+		data = sendMessage(sock, "RETR " + path + "\r\n")
+		if successCode(data):
+			content = sock.makefile().read(-1)
+			dataSocket.close()
+			print("Downloaded content from FTP")
+			return content
+		else:
+			print("Could not RETR from " + path)
+
+	def downloadFromFile(path):
+		"Downloads data from the provided local path"
+		f = open(path, "r")
+		content = f.read()
+		f.close()
+		print("Downloaded content from File")
+		return content
 
 	sock = createSocket()
 	connectSocket(sock, hostname, port)
@@ -217,61 +261,39 @@ def main(argv):
 		if param1URL:
 			initializeFTP(sock)
 			dataSocket = openDataSocket(sock)
-			sendMessage(sock, "LIST " + path + "\r\n")
-			response = recieveData(dataSocket)
-			print(response)
+			data = sendMessage(sock, "LIST " + path + "\r\n")
+			if successCode(data):
+				content = dataSocket.makefile().read(-1)
+				dataSocket.close()
+				print(response)
+			else:
+				print("Could not get LIST from " + path)
 		else: 
 			print("invalid params for ls")
 			exit(1)
 	elif operation.lower() == "cp":
 		initializeFTP(sock)
 		if param1URL:
-			dataSocket = openDataSocket(sock)
-			sendMessage(sock, "RETR " + path + "\r\n")
-			content = recieveData(dataSocket)
-			dataSocket.close()
-			print("Downloaded content from FTP")
-			f = open(param2, "w")
-			f.write(content)
-			f.close()
-			print("Uploaded content to File")
+			content = downloadFromFTP(sock, path)
+			uploadToFile(param2, content)
 		else:
 			if os.path.exists(param1):
-  				f = open(param1, "r")
-				content = f.read()
-				f.close()
-				print("Downloaded content from File")
-				dataSocket = openDataSocket(sock)
-				sendMessageNoResponse(dataSocket, content)
-				dataSocket.close()
-				print("Uploaded content to FTP")
+				content = dowloadFromFile(param1)
+				uploadToFTP(sock, path, content)
 			else:
-  				print("The local file does not exist")
+				print("The local file does not exist")
 	elif operation.lower() == "mv":
 		initializeFTP(sock)
 		if param1URL:
-			dataSocket = openDataSocket(sock)
-			sendMessage(sock, "RETR " + path + "\r\n")
-			content = recieveData(dataSocket)
-			dataSocket.close()
-			print("Downloaded content from FTP")
-			f = open(param2, "w")
-			f.write(content)
-			f.close()
-			print("Uploaded content to File")
-			sendMessage(sock, "DELE " + path + "\r\n")
+			content = downloadFromFTP(sock, path)
+			uploadToFile(param2, content)
+			#sendMessage(sock, "DELE " + path + "\r\n")
 		else:
 			if os.path.exists(param1):
-				f = open(param1, "r")
-				content = f.read()
-				f.close()
-				print("Downloaded content from File")
-				dataSocket = openDataSocket(sock)
-				sendMessageNoResponse(dataSocket, content)
-				dataSocket.close()
-				print("Uploaded content to FTP")
-				os.remove(param1)
-				print("Deleted local file")
+				content = dowloadFromFile(param1)
+				uploadToFTP(sock, path, content)
+				#os.remove(param1)
+				#print("Deleted local file")
 			else:
   				print("The local file does not exist")
 	else:
