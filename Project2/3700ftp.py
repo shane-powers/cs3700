@@ -121,7 +121,7 @@ def main(argv):
 		except socket.error:
 			print('Send failed')
 			sys.exit(1)
-		return 
+		return getResponse()
 
 	# method to recieve a message from the server
 	def recieveMessage():
@@ -192,16 +192,12 @@ def main(argv):
 
 	def initializeFTP():
 		sendMessage("USER " + username + "\r\n")
-		getResponse()
 		if password != "":
 			sendMessage("PASS " + password + "\r\n")
-			getResponse()
 		sendMessage("TYPE I\r\n")
-		getResponse()
 		sendMessage("MODE S\r\n")
-		getResponse()
 		sendMessage("STRU F\r\n")
-		getResponse()
+		
 
 	def uploadFile( path ):
 		sendMessage("STOR " + path + "\r\n")
@@ -219,7 +215,6 @@ def main(argv):
 		if param1URL:
 			initializeFTP()
 			sendMessage("LIST " + path + "\r\n")
-			getResponse()
 		else: 
 			print("invalid params for ls")
 			exit(1)
