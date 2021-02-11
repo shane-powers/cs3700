@@ -120,6 +120,8 @@ def main(argv):
 		data = b''
 		while True:
 			data = sock.recv(8192)
+			if not data:
+				break
 			if b'\r\n' in data:
 				total_data.append(data[:data.find(b'\r\n')])
 				break
@@ -207,7 +209,7 @@ def main(argv):
 	elif operation.lower() == "ls":
 		if param1URL:
 			initializeFTP(sock)
-			dataSocket = openDataSocket()
+			dataSocket = openDataSocket(sock)
 			sendMessage(sock, "LIST " + path + "\r\n")
 			recieved = recieveMessage(dataSocket)
 			print(recieved)
