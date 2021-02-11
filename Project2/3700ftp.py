@@ -182,7 +182,7 @@ def main(argv):
 		endParen = data.find(")")
 		ipAndPort = data[startParen+1:endParen].split(",")
 		dataIP = ".".join(ipAndPort[:4])
-		dataPort = (int(data[4]) << 8) + int(data[5])
+		dataPort = (int(ipAndPort[4]) << 8) + int(ipAndPort[5])
 		print(dataIP)
 		print(dataPort)
 
