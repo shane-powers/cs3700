@@ -119,7 +119,7 @@ def main(argv):
 		total_data = []
 		data = b''
 		while True:
-			data = sock.recv(8192)
+			data = sock.recv(1024)
 			if not data:
 				break
 			if b'\r\n' in data:
@@ -213,6 +213,7 @@ def main(argv):
 			dataSocket = openDataSocket(sock)
 			sendMessage(sock, "LIST " + path + "\r\n")
 			while True:
+				time.sleep(.2)
 				try:
 					recieved = recieveMessage(dataSocket)
 					if not recieved:
