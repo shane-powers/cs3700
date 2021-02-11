@@ -94,7 +94,7 @@ def main(argv):
 	path = URL[4]
 
 	def createSocket():
-		# create socket
+		"creates a socket"
 		try:
 			return socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 		except socket.error:
@@ -102,35 +102,38 @@ def main(argv):
 			sys.exit(1)
 	
 	def connectSocket(sock, ip, port):
-		# Connect to remote server
+		"connects a given socket to the given ip and port"
 		try:
-			sock.connect((ip, port))	
+			remote_ip = socket.gethostbyname( ip )
+		except socket.gaierror:
+			print('Error: Hostname could not be resolved. Exiting')
+			sys.exit(1)
+		try:
+			sock.connect((remote_ip, port))	
 		except:
 			print('Error Connecting to Host: ' + ip + ' on port ' + str(port))
 			sys.exit(1)
 
 	def recieveMessage( sock ):
-		# method to recieve a message from the socket argument
-		"This recieves a message from the server"
+		"This recieves a message from the socket argument"
 		total_data = []
 		data = b''
 		while True:
 			data = sock.recv(8192)
-			if b'\n' in data:
-				total_data.append(data[:data.find(b'\n')])
+			if b'\r\n' in data:
+				total_data.append(data[:data.find(b'\r\n')])
 				break
 			total_data.append(data)
 			if len(total_data) > 1:
 				last_pair = total_data[-2] + total_data[-1]
-				if b'\n' in last_pair:
-					total_data[-2] = last_pair[:last_pair.find(b'\n')]
+				if b'\r\n' in last_pair:
+					total_data[-2] = last_pair[:last_pair.find(b'\r\n')]
 					total_data.pop()
 					break
 		return b''.join(total_data).decode()
 
 	def sendMessage( sock, message ):
-		# method to send a message to the socket argument
-		"This sends a message to the server"
+		"This sends a message to the socket argument"
 		try:
 			sock.sendall(message.encode())
 		except socket.error:
@@ -141,13 +144,13 @@ def main(argv):
 		return response
 
 	def signIntoFTP(sock):
-		# signes into the FTP with given creds
+		"signes into the FTP with given creds"
 		sendMessage(sock, "USER " + username + "\r\n")
 		if password != "":
 			sendMessage(sock, "PASS " + password + "\r\n")
 
 	def initializeFTP(sock):
-		# initializes the FTP to send or recieve data
+		"initializes the FTP to send or recieve data"
 		sendMessage(sock, "TYPE I\r\n")
 		sendMessage(sock, "MODE S\r\n")
 		sendMessage(sock, "STRU F\r\n")
@@ -161,8 +164,8 @@ def main(argv):
 	# 	initializeFTP()
 	# 	sendMessage(sock, "RETR " + path + "\r\n")
 
-	# opens/returns a data socket from PASV command
 	def openDataSocket(sock):
+		"opens/returns a data socket from PASV command"
 		data = sendMessage(sock, "PASV\r\n")
 		startParen = data.find("(")
 		endParen = data.find(")")
@@ -173,21 +176,16 @@ def main(argv):
 		connectSocket(dataSocket, dataIP, dataPort)
 		return dataSocket
 
-	# closes the connection on socket argument
 	def closeConnection(sock):
+		"closes the connection on socket argument"
 		sendMessage(sock, "QUIT\r\n")
 
-	try:
-		remote_ip = socket.gethostbyname( hostname )
-	except socket.gaierror:
-		print('Error: Hostname could not be resolved. Exiting')
-		sys.exit(1)
-
 	sock = createSocket()
-	connectSocket(sock, remote_ip, port)
+	connectSocket(sock, hostname, port)
 
 	signIntoFTP(sock)
 
+	# switch logic based on operation recieved
 	if operation.lower() == "mkdir":
 		if param1URL:
 			sendMessage(sock, "MKD " + path + "\r\n")
@@ -200,21 +198,21 @@ def main(argv):
 		else: 
 			print("invalid params for rmdir")
 			exit(1)
+	elif operation.lower() == "rm":
+		if param1URL:
+			sendMessage(sock, "DELE " + path + "\r\n")
+		else: 
+			print("invalid params for rm")
+			exit(1)
 	elif operation.lower() == "ls":
 		if param1URL:
-			initializeFTP()
+			initializeFTP(sock)
 			dataSocket = openDataSocket()
 			sendMessage(sock, "LIST " + path + "\r\n")
 			recieved = recieveMessage(dataSocket)
 			print(recieved)
 		else: 
 			print("invalid params for ls")
-			exit(1)
-	elif operation.lower() == "rm":
-		if param1URL:
-			sendMessage(sock, "DELE " + path + "\r\n")
-		else: 
-			print("invalid params for rm")
 			exit(1)
 	elif operation.lower() == "cp":
 		print("copying")
