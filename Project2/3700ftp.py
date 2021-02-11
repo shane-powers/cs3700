@@ -1,10 +1,6 @@
 #!/usr/bin/python3
 
-# # set up variables and socket
-	# # username = "powerssha"
-	# # password = "T0Y9rpmtjVSLIuEBn71b"
-	# #port = 21
-	# #hostname = "networks-teaching-ftp.ccs.neu.edu"
+# powerssha:T0Y9rpmtjVSLIuEBn71b@networks-teaching-ftp.ccs.neu.edu
 
 # Import necessary libraries
 import socket
@@ -111,7 +107,6 @@ def main(argv):
 		print('Error: Hostname could not be resolved. Exiting')
 		sys.exit(1)
 
-
 	# method to send a message to the server
 	def sendMessage( message ):
 		"This sends a message to the server"
@@ -153,6 +148,7 @@ def main(argv):
 		else:
 			print(response)
 			exit(1)
+		return response
 
 	# Connect to remote server
 	try:
@@ -161,31 +157,41 @@ def main(argv):
 		print('Error Connecting to Host: ' + remote_ip + ' on port ' + str(port))
 		sys.exit(1)
 
-	def initializeFTP():
+	def signIntoFTP():
 		sendMessage("USER " + username + "\r\n")
 		if password != "":
 			sendMessage("PASS " + password + "\r\n")
+
+	def initializeFTP():
 		sendMessage("TYPE I\r\n")
 		sendMessage("MODE S\r\n")
 		sendMessage("STRU F\r\n")
 
 	def uploadFile( path ):
+		initializeFTP()
+		sendMessage("PASV\r\n")
 		sendMessage("STOR " + path + "\r\n")
 
 	def downloadFile( path ):
+		initializeFTP()
 		sendMessage("RETR " + path + "\r\n")
 
-	def openDataChannel():
-		sendMessage("PASV\r\n")
+	def openDataSocket():
+		data = sendMessage("PASV\r\n")
+		startParen = data.find("(")
+		endParen = data.find(")")
+		print(data[startParen:endParen])
 
 	def closeConnection():
 		sendMessage("QUIT\r\n")
 
-	initializeFTP()
+	signIntoFTP()
 
 	if operation.lower() == "ls":
 		if param1URL:
-			sendMessage("LIST " + path + "\r\n")
+			initializeFTP()
+			openDataSocket()
+			# sendMessage("LIST " + path + "\r\n")
 		else: 
 			print("invalid params for ls")
 			exit(1)
@@ -215,6 +221,7 @@ def main(argv):
 		print("Error: Operation not recognized")
 		exit(1)
 
+	closeConnection()
 	sock.close()
 	exit(0)
 
