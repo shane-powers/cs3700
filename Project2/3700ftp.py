@@ -211,8 +211,9 @@ def main(argv):
 			initializeFTP(sock)
 			dataSocket = openDataSocket(sock)
 			sendMessage(sock, "LIST " + path + "\r\n")
-			recieved = recieveMessage(dataSocket)
-			print(recieved)
+			while True:
+				recieved = recieveMessage(dataSocket)
+				print(recieved)
 		else: 
 			print("invalid params for ls")
 			exit(1)
