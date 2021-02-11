@@ -6,6 +6,7 @@
 import socket
 import sys
 import time
+import os
 
 def main(argv):
 	operation = ""
@@ -235,16 +236,44 @@ def main(argv):
 			f.close()
 			print("Uploaded content to File")
 		else:
-			f = open(param1, "r")
-			content = f.read()
-			f.close()
-			print("Downloaded content from File")
-			dataSocket = openDataSocket(sock)
-			sendMessageNoResponse(dataSocket, content)
-			dataSocket.close()
-			print("Uploaded content to FTP")
+			if os.path.exists(param1):
+  				f = open(param1, "r")
+				content = f.read()
+				f.close()
+				print("Downloaded content from File")
+				dataSocket = openDataSocket(sock)
+				sendMessageNoResponse(dataSocket, content)
+				dataSocket.close()
+				print("Uploaded content to FTP")
+			else:
+  				print("The local file does not exist")
 	elif operation.lower() == "mv":
-		print("moving")
+		initializeFTP(sock)
+		if param1URL:
+			dataSocket = openDataSocket(sock)
+			sendMessage(sock, "RETR " + path + "\r\n")
+			content = recieveData(dataSocket)
+			dataSocket.close()
+			print("Downloaded content from FTP")
+			f = open(param2, "w")
+			f.write(content)
+			f.close()
+			print("Uploaded content to File")
+			sendMessage(sock, "DELE " + path + "\r\n")
+		else:
+			if os.path.exists(param1):
+				f = open(param1, "r")
+				content = f.read()
+				f.close()
+				print("Downloaded content from File")
+				dataSocket = openDataSocket(sock)
+				sendMessageNoResponse(dataSocket, content)
+				dataSocket.close()
+				print("Uploaded content to FTP")
+				os.remove(param1)
+				print("Deleted local file")
+			else:
+  				print("The local file does not exist")
 	else:
 		print("Error: Operation not recognized")
 		exit(1)
