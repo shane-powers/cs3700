@@ -143,16 +143,15 @@ def main(argv):
 
 	def getResponse():
 		response = recieveMessage()
-		print(response)
 		responseCode = int(response.split()[0])
 		if responseCode >= 100 and responseCode < 200:
-			# good
+			print(response)
 		elif responseCode >= 200 and responseCode < 300:
-			# good
+			print(response)
 		elif responseCode >= 300 and responseCode < 400:
-			# good
+			print(response)
 		else:
-			print("exiting")
+			print(response)
 			exit(1)
 
 	# Connect to remote server
