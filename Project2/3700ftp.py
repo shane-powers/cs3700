@@ -164,15 +164,6 @@ def main(argv):
 		sendMessage(sock, "MODE S\r\n")
 		sendMessage(sock, "STRU F\r\n")
 
-	# def uploadFile( path ):
-	# 	initializeFTP()
-	# 	sendMessage(sock, "PASV\r\n")
-	# 	sendMessage(sock, "STOR " + path + "\r\n")
-
-	# def downloadFile( path ):
-	# 	initializeFTP()
-	# 	sendMessage(sock, "RETR " + path + "\r\n")
-
 	def openDataSocket(sock):
 		"opens/returns a data socket from PASV command"
 		data = sendMessage(sock, "PASV\r\n")
@@ -237,12 +228,13 @@ def main(argv):
 			print("Uploaded content to File")
 		else:
 			f = open(param1, "r")
-			content = "\n".join(f.readlines())
+			content = f.read()
+			print("content is: " + content)
 			f.close()
 			print("Downloaded content from File")
 			dataSocket = openDataSocket(sock)
-			sendMessage(sock, "STOR " + path + "\r\n")
 			sendMessage(dataSocket, content)
+			closeConnection(dataSocket)
 			dataSocket.close()
 			print("Uploaded content to FTP")
 	elif operation.lower() == "mv":
