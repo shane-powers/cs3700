@@ -230,17 +230,21 @@ def main(argv):
 			sendMessage(sock, "RETR " + path + "\r\n")
 			content = recieveData(dataSocket)
 			dataSocket.close()
+			print("Downloaded content from FTP")
 			f = open(param2, "w")
 			f.write(content)
 			f.close()
+			print("Uploaded content to File")
 		else:
 			f = open(param1, "r")
 			content = f.read()
 			f.close()
+			print("Downloaded content from File")
 			dataSocket = openDataSocket(sock)
 			sendMessage(sock, "STOR " + path + "\r\n")
 			sendMessage(dataSocket, content)
 			dataSocket.close()
+			print("Uploaded content to FTP")
 	elif operation.lower() == "mv":
 		print("moving")
 	else:
