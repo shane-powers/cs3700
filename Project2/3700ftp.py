@@ -178,11 +178,13 @@ def main(argv):
 
 	def openDataSocket():
 		data = sendMessage("PASV\r\n")
-		print("data is:")
-		print(data)
 		startParen = data.find("(")
 		endParen = data.find(")")
-		print(data[startParen:endParen])
+		ipAndPort = data[startParen+1:endParen].split(",")
+		dataIP = ".".join(ipAndPort[:4])
+		dataPort = (int(data[4]) << 8) + int(data[5])
+		print(dataIP)
+		print(dataPort)
 
 	def closeConnection():
 		sendMessage("QUIT\r\n")
