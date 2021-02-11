@@ -141,7 +141,7 @@ def main(argv):
 		except socket.error:
 			print('Send failed')
 			sys.exit(1)
-		time.sleep(.5)
+		time.sleep(.2)
 		response = recieveMessage(sock)
 		print(response)
 		return response
@@ -213,10 +213,13 @@ def main(argv):
 			dataSocket = openDataSocket(sock)
 			sendMessage(sock, "LIST " + path + "\r\n")
 			while True:
-				recieved = recieveMessage(dataSocket)
-				if not recieved:
+				try:
+					recieved = recieveMessage(dataSocket)
+					if not recieved:
+						break
+					print(recieved)
+				except:
 					break
-				print(recieved)
 		else: 
 			print("invalid params for ls")
 			exit(1)
