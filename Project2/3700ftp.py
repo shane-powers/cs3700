@@ -118,7 +118,7 @@ def main(argv):
 		"This recieves a message from the socket argument until connection is closed"
 		all_data = sock.makefile().read(-1)
 		sock.close()
-		return all_data.decode()
+		return all_data
 
 	def recieveMessage( sock ):
 		"This recieves a message from the socket argument until \\r\\n character met"
@@ -218,7 +218,7 @@ def main(argv):
 			initializeFTP(sock)
 			dataSocket = openDataSocket(sock)
 			sendMessage(sock, "LIST " + path + "\r\n")
-			response = recievedData(dataSocket)
+			response = recieveData(dataSocket)
 			print(response)
 		else: 
 			print("invalid params for ls")
