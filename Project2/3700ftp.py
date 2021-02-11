@@ -137,15 +137,9 @@ def main(argv):
 
 	def successCode(response):
 		"returns true if code is a success, false otherwise"
-<<<<<<< HEAD
 		code = int(response.split()[0])
 		if code >= 100 and code < 200:
 			return True
-=======
-		code = response.split()[0]
-		if code >= 100 and code < 200:
-			return False
->>>>>>> 5edc5d34e2f243adad6d18e028a12aa87bc56bbc
 		elif code >= 200 and code < 300:
 			return True
 		elif code >=300 and code < 400:
