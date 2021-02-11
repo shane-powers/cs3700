@@ -141,6 +141,7 @@ def main(argv):
 		except socket.error:
 			print('Send failed')
 			sys.exit(1)
+		time.sleep(.5)
 		response = recieveMessage(sock)
 		print(response)
 		return response
