@@ -146,11 +146,11 @@ def main(argv):
 		print(response)
 		responseCode = int(response.split()[0])
 		if responseCode >= 100 and responseCode < 200:
-			# good
+			continue
 		elif responseCode >= 200 and responseCode < 300:
-			# good
+			continue
 		elif responseCode >= 300 and responseCode < 400:
-			# good
+			continue
 		else:
 			print("exiting")
 			exit(1)
