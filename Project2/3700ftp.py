@@ -114,8 +114,14 @@ def main(argv):
 			print('Error Connecting to Host: ' + ip + ' on port ' + str(port))
 			sys.exit(1)
 
+	def recieveData( sock ):
+		"This recieves a message from the socket argument until connection is closed"
+		all_data = sock.makefile().read(-1)
+		sock.close()
+		return all_data.decode()
+
 	def recieveMessage( sock ):
-		"This recieves a message from the socket argument"
+		"This recieves a message from the socket argument until \\r\\n character met"
 		total_data = []
 		data = b''
 		while True:
@@ -212,15 +218,8 @@ def main(argv):
 			initializeFTP(sock)
 			dataSocket = openDataSocket(sock)
 			sendMessage(sock, "LIST " + path + "\r\n")
-			while True:
-				time.sleep(.2)
-				try:
-					recieved = recieveMessage(dataSocket)
-					if not recieved:
-						break
-					print(recieved)
-				except:
-					break
+			response = recievedData(dataSocket)
+			print(response)
 		else: 
 			print("invalid params for ls")
 			exit(1)
