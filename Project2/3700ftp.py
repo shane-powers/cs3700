@@ -178,6 +178,8 @@ def main(argv):
 
 	def openDataSocket():
 		data = sendMessage("PASV\r\n")
+		print("data is:")
+		print(data)
 		startParen = data.find("(")
 		endParen = data.find(")")
 		print(data[startParen:endParen])
