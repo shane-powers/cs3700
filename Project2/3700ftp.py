@@ -213,6 +213,8 @@ def main(argv):
 			sendMessage(sock, "LIST " + path + "\r\n")
 			while True:
 				recieved = recieveMessage(dataSocket)
+				if not recieved:
+					break
 				print(recieved)
 		else: 
 			print("invalid params for ls")
