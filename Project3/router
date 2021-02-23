@@ -46,6 +46,7 @@ class Router:
     self.relations = {}
     self.sockets = {}
     for relationship in networks:
+      network, relation = relationship.split("-")
       self.sockets[network] = socket.socket(socket.AF_UNIX, socket.SOCK_SEQPACKET)
       self.sockets[network].setblocking(0)
       self.sockets[network].connect(network)
@@ -136,7 +137,7 @@ class Router:
     """ dispatches a packet """
     print("received this packet")
     print(packet)
-    print("this is my srcif")
+    print("what is srcif")
     print(srcif)
     # TODO
     return False
@@ -168,7 +169,7 @@ class Router:
 
 if __name__ == "__main__":
   PARSER = argparse.ArgumentParser(description='route packets')
-  PARSER.add_argument('ASN', metavar='asn', type=int, nargs=1, help="asn")
+  PARSER.add_argument('ASN', metavar='asn', type=int, help="asn")
   PARSER.add_argument('networks', metavar='networks', type=str, nargs='+', help="networks")
   ARGS = PARSER.parse_args()
   Router(ARGS.networks).run()
