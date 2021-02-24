@@ -172,7 +172,7 @@ class Router:
     self.updates[packet['src']] = message
 
     # 2) add an entry to our forwarding table
-    self.routes[packet['dst']] = {"network" : message.network, "netmask" : message.netmask, "peer" : packet.src}
+    self.routes[packet['dst']] = {"network" : message["network"], "netmask" : message["netmask"], "peer" : packet['src']}
 
     # 3) potentially send copies of the announcement to neighboring routers 'getRoute()'
     route = self.get_route(srcif, packet["dst"])
