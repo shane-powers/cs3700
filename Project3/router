@@ -172,12 +172,20 @@ class Router:
     self.updates[packet['src']] = message
 
     # 2) add an entry to our forwarding table
-    self.routes[packet['dst']] = {"network" : message["network"], "netmask" : message["netmask"], "peer" : packet['src']}
+    
+    self.routes[packet['dst']] = { 
+      network: message["network"], 
+      netmask: message["netmask"], 
+      localpref: message["localpref"], 
+      ASPath: message["ASPath"], 
+      origin: message["origin"], 
+      selfOrigin: message["selfOrigin"] 
+      }
 
     # 3) potentially send copies of the announcement to neighboring routers 'getRoute()'
     route = self.get_route(srcif, packet["dst"])
-    print("Get route called in update: " + str(route0)
-    self.forward(route, packet)
+    print("Get route called in update: " + str(route))
+    self.forward(route[0], packet)
     print("Update forwarded")
     #   a) update received from a customer: send updates to all other neighbors
     #   b) update received from a peer or provider: only send updates to our customers
