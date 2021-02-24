@@ -5,6 +5,7 @@ import argparse
 import json
 import select
 import socket
+import pickle
 
 ##########################################################################################
 
@@ -190,7 +191,7 @@ class Router:
     # 3) potentially send copies of the announcement to neighboring routers 'getRoute()'
     route = self.get_route(srcif, packet["dst"])
     print("Get route called in update: " + str(route))
-    route.sendall(str(packet).encode())
+    route.sendall(pickle.dumps(packet))
     print("Update forwarded")
     #   a) update received from a customer: send updates to all other neighbors
     #   b) update received from a peer or provider: only send updates to our customers
