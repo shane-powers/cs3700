@@ -172,22 +172,15 @@ class Router:
   def handle_packet(self, srcif, packet):
     """ dispatches a packet """
     messageType = packet.type
-    if (messageType == "update") {
+    if messageType == "update":
       return self.update(srcif, packet)
-    } elif (messageType == "revoke") {
+    elif messageType == "revoke":
       return self.revoke(packet)
-    } elif (messageType == "data") {
+    elif messageType == "data": 
       routeToSend = self.get_route(srcif, packet.dst)
 
       if routeToSend == None:
-        
-        noRoute = {
-          "src":  srcif,          
-          "dst":  packet.src,          
-          "type": "no route",                   
-          "msg":  {}
-          }
-        
+        noRoute = {"src":srcif,"dst":packet.src,"type":"no route","msg":{}}
         self.forward(srcif, noRoute)
       else:
         self.forward(srcif, packet)
@@ -219,18 +212,19 @@ class Router:
       # 5) if the source router is a peer or a provider, and the destination is a peer or privider, then drop the data message
       #   a) in this case, send a "no route" message back to the source
 
-    } elif (messageType == "no route") {
+    elif messageType == "no route":
+      return
         
         
         
-    } elif (messageType == "dump") {
+    elif messageType == "dump":
       # 1) must respond with a "table" message that contains a copy of the current forwarding table in our router
-
-    } elif (messageType == "table") {
-
-    } else {
-
-    }
+      return
+    elif messageType == "table":
+      return
+    else:
+      return
+    
     return False
 
   def send_error(self, conn, msg):
