@@ -166,7 +166,7 @@ class Router:
 
   def update(self, srcif, packet):
     """ handle update packets """
-    message = packet.msg
+    message = packet["msg"]
     
     # 1) save a copy of the announcement in case we need it later
     self.updates[packet['src']] = message
