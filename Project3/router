@@ -28,7 +28,7 @@ NMSK = "netmask"
 ORIG = "origin"
 LPRF = "localpref"
 APTH = "ASPath"
-SORG = "selfOrigin"
+SORG = "selfOrigin"     
 
 # internal route info
 CUST = "cust"
@@ -41,7 +41,7 @@ PROV = "prov"
 class Router:
   """ Your Router """
   def __init__(self, networks):
-    self.routes = {}
+    self.routes = {} # { }
     self.updates = {}
     self.relations = {}
     self.sockets = {}
@@ -54,6 +54,7 @@ class Router:
 
   def lookup_routes(self, daddr):
     """ Lookup all valid routes for an address """
+    
     # TODO
     outroutes = []
     return outroutes
@@ -110,7 +111,7 @@ class Router:
 
   def forward(self, srcif, packet):
     """ Forward a data packet """
-    # TODO
+    this.sockets[srcif].send(packet)
     return False
 
   def coalesce(self):
@@ -121,12 +122,14 @@ class Router:
   def update(self, srcif, packet):
     """ handle update packets """
     # TODO 
-
+    
     # 1) save a copy of the announcement in case we need it later
+    self.updates[packet.src] = packet.msg
 
     # 2) add an entry to our forwarding table
+    self.routes[packet.src] = {"network" : "<ip_addr>", "netmask" : "<ip_addr_netmask>", "peer" : "<ip_addr>"}
 
-    # 3) potentially send copies of the announcement to neighboring routers
+    # 3) potentially send copies of the announcement to neighboring routers 'getRoute()'
     #   a) update received from a customer: send updates to all other neighbors
     #   b) update received from a peer or provider: only send updates to our customers
 
@@ -150,19 +153,56 @@ class Router:
     """ handles dump table requests """
     # TODO
 
+    '''
+    self.sockets[destIP].send([data below])
+    {
+      "src":  "<ip_addr>",          # Example: 72.65.0.1
+      "dst":  "<ip_addr>",          # Example: 72.65.0.2
+      "type": "table",                   
+      "msg": \[
+        {"network" : "<ip_addr>", "netmask" : "<ip_addr_netmask>", "peer" : "<ip_addr>"},
+        {"network" : "<ip_addr>", "netmask" : "<ip_addr_netmask>", "peer" : "<ip_addr>"},
+        ...
+      \]
+    }
+    '''
+
     return True
 
   def handle_packet(self, srcif, packet):
     """ dispatches a packet """
     messageType = packet.type
     if (messageType == "update") {
-
+      return self.update(srcif, packet)
     } elif (messageType == "revoke") {
-
+      return self.revoke(packet)
     } elif (messageType == "data") {
+      routeToSend = self.get_route(srcif, packet.dst)
+
+      if routeToSend == None:
+        
+        noRoute = {
+          "src":  srcif,          
+          "dst":  packet.src,          
+          "type": "no route",                   
+          "msg":  {}
+          }
+        
+        self.forward(srcif, noRoute)
+      else:
+        self.forward(srcif, packet)
+
+
+
+
+
+
+
 
       # all the following below takes place in 'getRoute()' method above
-      
+
+      # 0) if we dont have a route, send a "no route" message back to the source that sent us data
+
       # 1) if we know exactly one ppossible route, forward to the appropriate port
 
       # 2) then, we do longest prefix match on what we currently have in our forwarding table
@@ -180,7 +220,9 @@ class Router:
       #   a) in this case, send a "no route" message back to the source
 
     } elif (messageType == "no route") {
-
+        
+        
+        
     } elif (messageType == "dump") {
       # 1) must respond with a "table" message that contains a copy of the current forwarding table in our router
 
@@ -211,8 +253,10 @@ class Router:
             if self.sockets[sock] == conn:
               srcif = sock
           msg = json.loads(k)
-          if not self.handle_packet(srcif, msg):
-            self.send_error(conn, msg)
+          print("my srcif is ")
+          print(srcif)
+          # if not self.handle_packet(srcif, msg):
+          #   self.send_error(conn, msg)
         else:
           return
 
