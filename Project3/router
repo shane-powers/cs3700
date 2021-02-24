@@ -129,7 +129,7 @@ class Router:
     # 3) potentially send copies of the announcement to neighboring routers
     #   a) update received from a customer: send updates to all other neighbors
     #   b) update received from a peer or provider: only send updates to our customers
-    
+
     return False
 
   def revoke(self, packet):
@@ -149,6 +149,7 @@ class Router:
   def dump(self, packet):
     """ handles dump table requests """
     # TODO
+
     return True
 
   def handle_packet(self, srcif, packet):
@@ -160,9 +161,28 @@ class Router:
 
     } elif (messageType == "data") {
 
+      # all the following below takes place in 'getRoute()' method above
+      
+      # 1) if we know exactly one ppossible route, forward to the appropriate port
+
+      # 2) then, we do longest prefix match on what we currently have in our forwarding table
+
+      # 3) finally, 
+      #   a) The path with the highest "localpref" wins. If the "localpref"s are equal...
+      #   b) The path with "selfOrigin" = true wins. If all selfOrigins are the equal...
+      #   c) The path with the shortest "ASPath" wins. If multiple routes have the shortest length...
+      #   d) The path with the best "origin" wins, were IGP > EGP > UNK. If multiple routes have the best origin...
+      #   e) The path from the neighbor router with the lowest IP address.
+
+      # BUT should we forward or drop
+      # 4) if the source or destination router is a customer, you should forward the data
+      # 5) if the source router is a peer or a provider, and the destination is a peer or privider, then drop the data message
+      #   a) in this case, send a "no route" message back to the source
+
     } elif (messageType == "no route") {
 
     } elif (messageType == "dump") {
+      # 1) must respond with a "table" message that contains a copy of the current forwarding table in our router
 
     } elif (messageType == "table") {
 
