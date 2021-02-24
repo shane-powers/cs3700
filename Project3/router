@@ -55,7 +55,7 @@ class Router:
   def lookup_routes(self, daddr):
     """ Lookup all valid routes for an address """
     
-    
+    # TODO need to catch unknown daddr
     outroutes = [self.routes[daddr]] # all of the routes that match this destination address
     print("Outroutes" + str(outroutes))
     return outroutes
