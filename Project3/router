@@ -154,7 +154,7 @@ class Router:
       #routes = self.filter_relationships(srcif, routes)
 
     print("At end of get_route: " + str(routes))
-    peer = routes[0]['peer']
+    peer = routes[0]["peer"]
     return self.sockets[peer] if peer else None
 
   def forward(self, srcif, packet):
@@ -173,18 +173,18 @@ class Router:
     message = packet["msg"]
     
     # 1) save a copy of the announcement in case we need it later
-    self.updates[packet['src']] = message
+    self.updates[packet["src"]] = message
 
     # 2) add an entry to our forwarding table
     
-    self.routes[packet['dst']] = { 
+    self.routes[packet["dst"]] = { 
       "network": message["network"], 
       "netmask": message["netmask"], 
       "localpref": message["localpref"], 
       "ASPath": message["ASPath"], 
       "origin": message["origin"], 
       "selfOrigin": message["selfOrigin"],
-      "peer": packet['src']
+      "peer": packet["src"]
       }
 
     # 3) potentially send copies of the announcement to neighboring routers 'getRoute()'
