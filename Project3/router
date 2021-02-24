@@ -121,11 +121,29 @@ class Router:
   def update(self, srcif, packet):
     """ handle update packets """
     # TODO 
+
+    # 1) save a copy of the announcement in case we need it later
+
+    # 2) add an entry to our forwarding table
+
+    # 3) potentially send copies of the announcement to neighboring routers
+    #   a) update received from a customer: send updates to all other neighbors
+    #   b) update received from a peer or provider: only send updates to our customers
+    
     return False
 
   def revoke(self, packet):
     """ handle revoke packets """
     # TODO
+
+    # 1) save a copy of the revocation, in case we need it later
+
+    # 2) remove the dead entry from the forwarding table
+
+    # 3) potentially send copies of the announcement to neighboring routers
+    #   a) update received from a customer: send revoke to all other neighbors
+    #   b) update received from a peer or provider: only send revoke to our customers
+
     return True
 
   def dump(self, packet):
