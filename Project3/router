@@ -64,15 +64,15 @@ class Router:
     """ select the route with the shortest AS Path """
     outroutes = []
     # assuming there will always be one route in the list given
-    shortestRoute = len(routes[0].ASPath)
+    shortestRoute = len(routes[0]["ASPath"])
     # find the shortest route
     for i in range(len(routes)):
-      currentRoute = len(routes[i].ASPath)
+      currentRoute = len(routes[i]["ASPath"])
       if currentRoute < shortestRoute:
         shortestRoute = currentRoute
     # add shortest routes to output
     for i in range(len(routes)):
-      currentRoute = len(routes[i].ASPath)
+      currentRoute = len(routes[i]["ASPath"])
       if currentRoute == shortestRoute:
         outroutes.append(routes[i])
     return outroutes
@@ -81,15 +81,15 @@ class Router:
     """ select the route with the shortest AS Path """
     outroutes = []
     # assuming there will always be one route in the list given
-    highestPreference = routes[0].localpref
+    highestPreference = routes[0]["localpref"]
     # find the highest preference
     for i in range(len(routes)):
-      currentPreference = routes[i].localpref
+      currentPreference = routes[i]["localpref"]
       if currentPreference > highestPreference:
         highestPreference = currentPreference
     # add routes with highest preference to output
     for i in range(len(routes)):
-      currentPreference = routes[i].localpref
+      currentPreference = routes[i]["localpref"]
       if currentPreference == highestPreference:
         outroutes.append(routes[i])
     return outroutes
@@ -99,7 +99,7 @@ class Router:
     outroutes = []
     # every route in the range with selfOrigin true gets added to output
     for i in range(len(routes)):
-      if routes[i].selfOrigin:
+      if routes[i]["selfOrigin"]:
         outroutes.append(routes[i])
     return outroutes
 
@@ -110,9 +110,9 @@ class Router:
     unk = []
     # Populate fields above with respective routes
     for i in range(len(routes)):
-      if routes[i].origin == "EGP":
+      if routes[i]["origin"] == "EGP":
         egp.append(routes[i])
-      elif routes[i].origin == "IGP":
+      elif routes[i]["origin"] == "IGP":
         igp.append(routes[i])
       else:
         unk.append(routes[i])
@@ -169,13 +169,13 @@ class Router:
     message = packet.msg
     
     # 1) save a copy of the announcement in case we need it later
-    self.updates[packet.src] = message
+    self.updates[packet['src']] = message
 
     # 2) add an entry to our forwarding table
-    self.routes[packet.dst] = {"network" : message.network, "netmask" : message.netmask, "peer" : packet.src}
+    self.routes[packet['dst']] = {"network" : message.network, "netmask" : message.netmask, "peer" : packet.src}
 
     # 3) potentially send copies of the announcement to neighboring routers 'getRoute()'
-    route = self.get_route(srcif, packet.dst)
+    route = self.get_route(srcif, packet["dst"])
     print("Get route called in update: " + route)
     self.forward(route, packet)
     print("Update forwarded")
@@ -220,16 +220,16 @@ class Router:
 
   def handle_packet(self, srcif, packet):
     """ dispatches a packet """
-    messageType = packet.type
+    messageType = packet["type"]
     if messageType == "update":
       return self.update(srcif, packet)
     elif messageType == "revoke":
       return self.revoke(packet)
     elif messageType == "data": 
-      routeToSend = self.get_route(srcif, packet.dst)
+      routeToSend = self.get_route(srcif, packet["dst"])
 
       if routeToSend == None:
-        noRoute = {"src":srcif,"dst":packet.src,"type":"no route","msg":{}}
+        noRoute = {"src":srcif,"dst":packet["src"],"type":"no route","msg":{}}
         self.forward(srcif, noRoute)
       else:
         self.forward(srcif, packet)
