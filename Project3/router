@@ -176,7 +176,6 @@ class Router:
     self.updates[packet["src"]] = message
 
     # 2) add an entry to our forwarding table
-    
     self.routes[packet["dst"]] = { 
       "network": message["network"], 
       "netmask": message["netmask"], 
@@ -188,9 +187,10 @@ class Router:
       }
 
     # 3) potentially send copies of the announcement to neighboring routers 'getRoute()'
+    # TODO do not send the same packet but instead make a new update packet with expectant dest ip address
     route = self.get_route(srcif, packet["dst"])
     print("Get route called in update: " + str(route))
-    whatToSend = str(json.dumps(packet)).encode()
+    whatToSend = json.dumps(packet).encode()
     route.sendall(whatToSend)
     print("Update forwarded")
     #   a) update received from a customer: send updates to all other neighbors
