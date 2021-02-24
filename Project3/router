@@ -135,11 +135,22 @@ class Router:
 
   def handle_packet(self, srcif, packet):
     """ dispatches a packet """
-    print("received this packet")
-    print(packet)
-    print("what is srcif")
-    print(srcif)
-    # TODO
+    messageType = packet.type
+    if (messageType == "update") {
+
+    } elif (messageType == "revoke") {
+
+    } elif (messageType == "data") {
+
+    } elif (messageType == "no route") {
+
+    } elif (messageType == "dump") {
+
+    } elif (messageType == "table") {
+
+    } else {
+
+    }
     return False
 
   def send_error(self, conn, msg):
