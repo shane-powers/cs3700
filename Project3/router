@@ -170,9 +170,10 @@ class Router:
     return False
 
   def forwardUpdate(self, srcif, destinationIP, msg):
+    sourceIP = srcif[:-1] + "1"
     newUpdate = {
       "type": "update",
-      "src": srcif,
+      "src": sourceIP,
       "dst": destinationIP,
       "msg": msg
     }
@@ -198,7 +199,7 @@ class Router:
     for neighborIP in self.sockets:
       if not neighborIP == packet["src"]:
         print("neighborIP is : " + neighborIP)
-        self.forwardUpdate(packet["dst"], neighborIP, packet["msg"])
+        self.forwardUpdate(neighborIP, neighborIP, packet["msg"])
     # TODO
     #   a) update received from a customer: send updates to all other neighbors
     #   b) update received from a peer or provider: only send updates to our customers
