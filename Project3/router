@@ -171,7 +171,6 @@ class Router:
     return False
 
   def forwardUpdate(self, srcif, destinationIP, msg):
-    sourceIP = srcif[:-1] + "1"
     newUpdate = {
       "type": "update",
       "src": sourceIP,
@@ -183,8 +182,10 @@ class Router:
   def update(self, srcif, packet):
     """ handle update packets """
     message = packet["msg"]
+
     # 1) save a copy of the announcement in case we need it later
     self.updates[packet["src"]] = message
+
     # 2) add an entry to our forwarding table
     self.routes[packet["dst"]] = { 
       "network": message["network"], 
@@ -195,12 +196,21 @@ class Router:
       "selfOrigin": message["selfOrigin"],
       "peer": packet["src"]
       }
+
     # 3) potentially send copies of the announcement to neighboring routers 
     # Currently sends packet to all other connections
+    messageToNeighbors = { 
+      "network": message["network"], 
+      "netmask": message["netmask"], 
+      "localpref": message["localpref"], 
+      "ASPath": message["ASPath"].append(self.asn), 
+      "origin": message["origin"], 
+      "selfOrigin": message["selfOrigin"]
+    }
     for neighborIP in self.sockets:
       if not neighborIP == packet["src"]:
-        print("neighborIP is : " + neighborIP)
-        self.forwardUpdate(neighborIP, neighborIP, packet["msg"])
+        self.forwardUpdate(packet["dst"], neighborIP, messageToNeighbors)
+
     # TODO
     #   a) update received from a customer: send updates to all other neighbors
     #   b) update received from a peer or provider: only send updates to our customers
@@ -268,8 +278,6 @@ class Router:
 
   def run(self):
     """ main loop for the router """
-    print("our asn is :")
-    print(self.asn)
     while True:
       socks = select.select(self.sockets.values(), [], [], 0.1)[0]
       for conn in socks:
