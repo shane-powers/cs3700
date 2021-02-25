@@ -40,7 +40,8 @@ PROV = "prov"
 
 class Router:
   """ Your Router """
-  def __init__(self, networks):
+  def __init__(self, asn, networks):
+    self.asn = asn
     self.routes = {} # { network: num, netmask: num, localpref: num, ASPath: [], origin: string, selfOrigin: boolean }
     self.updates = {}
     self.relations = {}
@@ -267,6 +268,8 @@ class Router:
 
   def run(self):
     """ main loop for the router """
+    print("our asn is :")
+    print(self.asn)
     while True:
       socks = select.select(self.sockets.values(), [], [], 0.1)[0]
       for conn in socks:
@@ -287,7 +290,7 @@ class Router:
 
 if __name__ == "__main__":
   PARSER = argparse.ArgumentParser(description='route packets')
-  PARSER.add_argument('ASN', metavar='asn', type=int, help="asn")
+  PARSER.add_argument('asn', metavar='asn', type=int, help="asn")
   PARSER.add_argument('networks', metavar='networks', type=str, nargs='+', help="networks")
   ARGS = PARSER.parse_args()
   Router(ARGS.networks).run()
