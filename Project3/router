@@ -261,7 +261,7 @@ class Router:
     elif messageType == "no route":
       return 
     elif messageType == "dump":
-      #self.dump(packet)
+      self.dump(packet)
       return
     elif messageType == "table":
       return
