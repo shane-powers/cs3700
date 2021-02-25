@@ -168,23 +168,14 @@ class Router:
     # TODO (this is the most difficult task, save until last)
     return False
 
-  def forwardUpdate(self, destinationIP):
+  def forwardUpdate(self, destinationIP, msg):
     sourceIP = destinationIP[:-1] + "1"
     print(sourceIP)
     newUpdate = {
       "type": "update",
       "src": sourceIP,
       "dst": destinationIP,
-      "msg": {
-        "network": "192.168.0.0",
-        "netmask": "255.255.255.0",
-        "localpref": 100,
-        "ASPath": [
-          1
-        ],
-        "origin": "EGP",
-        "selfOrigin": True
-      }
+      "msg": msg
     }
     socket = self.sockets[destinationIP]
     encodedUpdate = json.dumps(newUpdate).encode()
@@ -212,7 +203,7 @@ class Router:
     # TODO do not send the same packet but instead make a new update packet with expectant dest ip address
     for key in self.sockets:
       if not key == packet["src"]:
-        self.forwardUpdate(key)
+        self.forwardUpdate(key, packet["msg"])
 
       # route = self.get_route(srcif, packet["dst"])
       # print("Get route called in update: " + str(route))
