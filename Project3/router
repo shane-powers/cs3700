@@ -210,7 +210,8 @@ class Router:
       "selfOrigin": message["selfOrigin"]
     }
     for neighborIP in self.sockets:
-      self.forwardUpdate(neighborIP[:-1] + "1", neighborIP, messageToNeighbors)
+      if not neighborIP == packet["src"]:
+        self.forwardUpdate(neighborIP[:-1] + "1", neighborIP, messageToNeighbors)
 
     # TODO
     #   a) update received from a customer: send updates to all other neighbors
@@ -220,11 +221,8 @@ class Router:
   def revoke(self, packet):
     """ handle revoke packets """
     # TODO
-
     # 1) save a copy of the revocation, in case we need it later
-
     # 2) remove the dead entry from the forwarding table
-
     # 3) potentially send copies of the announcement to neighboring routers
     #   a) update received from a customer: send revoke to all other neighbors
     #   b) update received from a peer or provider: only send revoke to our customers
@@ -241,8 +239,8 @@ class Router:
         "peer": self.routes[key]["peer"]
       })
     dumpPacket = {
-      "src":  packet["dst"],          # Example: 72.65.0.1
-      "dst":  packet["src"],          # Example: 72.65.0.2
+      "src":  packet["dst"],          
+      "dst":  packet["src"],         
       "type": "table",                   
       "msg": json.dumps(dumpMessage)
     }
