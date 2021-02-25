@@ -161,7 +161,7 @@ class Router:
     """ Forward a data packet """
     socket = self.sockets[srcif]
     data = json.dumps(packet)
-    socket.sendall(packet.encode())
+    socket.sendall(data.encode())
     return False
 
   def coalesce(self):
@@ -170,10 +170,10 @@ class Router:
     return False
 
   def forwardUpdate(self, srcif, destinationIP, msg):
-    sourceIP = srcif[:-1] + "1"
+    # sourceIP = srcif[:-1] + "1"
     newUpdate = {
       "type": "update",
-      "src": sourceIP,
+      "src": srcif,
       "dst": destinationIP,
       "msg": msg
     }
@@ -238,6 +238,7 @@ class Router:
       "type": "table",                   
       "msg": dumpMessage
     }
+
     self.forward(packet["src"], dumpMessage)
     return True
 
