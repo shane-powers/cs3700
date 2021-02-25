@@ -168,10 +168,12 @@ class Router:
     # TODO (this is the most difficult task, save until last)
     return False
 
-  def forwardUpdate(self, srcif, destinationIP):
+  def forwardUpdate(self, destinationIP):
+    sourceIP = destinationIP.substring(0, len(destinationIP)-1) + "1"
+    print(sourceIP)
     newUpdate = {
       "type": "update",
-      "src": srcif,
+      "src": sourceIP,
       "dst": destinationIP,
       "msg": {
         "network": "192.168.0.0",
@@ -181,7 +183,7 @@ class Router:
           1
         ],
         "origin": "EGP",
-        "selfOrigin": true
+        "selfOrigin": True
       }
     }
     socket = self.sockets[destinationIP]
@@ -208,9 +210,9 @@ class Router:
 
     # 3) potentially send copies of the announcement to neighboring routers 'getRoute()'
     # TODO do not send the same packet but instead make a new update packet with expectant dest ip address
-    for key in sockets:
+    for key in self.sockets:
       if not key == packet["src"]:
-        self.forwardUpdate(srcif, key)
+        self.forwardUpdate(key)
 
       # route = self.get_route(srcif, packet["dst"])
       # print("Get route called in update: " + str(route))
