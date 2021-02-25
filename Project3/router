@@ -57,9 +57,9 @@ class Router:
     """ Lookup all valid routes for an address """
     outroutes = []
     prefix = daddr[:3]
-    for addr in routes:
+    for addr in self.routes:
       if prefix == addr[:3]:
-        outroutes.append(routes[addr])
+        outroutes.append(self.routes[addr])
     # TODO need to catch unknown daddr
     print("Outroutes" + str(outroutes))
     return outroutes
