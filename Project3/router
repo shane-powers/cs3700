@@ -55,11 +55,16 @@ class Router:
 
   def lookup_routes(self, daddr):
     """ Lookup all valid routes for an address """
-    
+    outroutes = []
+    prefix = daddr[:3]
+    for addr in routes:
+      if prefix == addr[:3]:
+        outroutes.append(routes[addr])
     # TODO need to catch unknown daddr
-    outroutes = [self.routes[daddr]] # all of the routes that match this destination address
     print("Outroutes" + str(outroutes))
     return outroutes
+  
+  
 
   def get_shortest_as_path(self, routes):
     """ select the route with the shortest AS Path """
