@@ -210,8 +210,7 @@ class Router:
       "selfOrigin": message["selfOrigin"]
     }
     for neighborIP in self.sockets:
-      if not neighborIP == packet["src"]:
-        self.forwardUpdate(neighborIP[:-1] + "1", neighborIP, messageToNeighbors)
+      self.forwardUpdate(neighborIP[:-1] + "1", neighborIP, messageToNeighbors)
 
     # TODO
     #   a) update received from a customer: send updates to all other neighbors
@@ -264,7 +263,7 @@ class Router:
     elif messageType == "no route":
       return 
     elif messageType == "dump":
-      self.dump(packet)
+      #self.dump(packet)
       return
     elif messageType == "table":
       return
