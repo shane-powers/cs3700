@@ -158,6 +158,7 @@ class Router:
       #routes = self.filter_relationships(srcif, routes)
 
     print("At end of get_route: " + str(routes))
+    peer = None
     if routes:
       peer = routes[0]["peer"]
     return self.sockets[peer] if peer else None
@@ -270,7 +271,8 @@ class Router:
           "type": "no route",                   
           "msg":  {}
         }
-        self.forward(srcif[:-1] + 2, data)
+        print("the srcif is :", srcif)
+        self.forward(srcif[:-1] + "2", data)
       return 
     elif messageType == "no route":
       return 
