@@ -168,6 +168,26 @@ class Router:
     # TODO (this is the most difficult task, save until last)
     return False
 
+  def forwardUpdate(self, srcif, destinationIP):
+    newUpdate = {
+      "type": "update",
+      "src": srcif,
+      "dst": destinationIP,
+      "msg": {
+        "network": "192.168.0.0",
+        "netmask": "255.255.255.0",
+        "localpref": 100,
+        "ASPath": [
+          1
+        ],
+        "origin": "EGP",
+        "selfOrigin": true
+      }
+    }
+    socket = self.sockets[destinationIP]
+    encodedUpdate = json.dumps(newUpdate).encode()
+    socket.sendall(encodedUpdate)
+
   def update(self, srcif, packet):
     """ handle update packets """
     message = packet["msg"]
@@ -188,11 +208,15 @@ class Router:
 
     # 3) potentially send copies of the announcement to neighboring routers 'getRoute()'
     # TODO do not send the same packet but instead make a new update packet with expectant dest ip address
-    route = self.get_route(srcif, packet["dst"])
-    print("Get route called in update: " + str(route))
-    whatToSend = json.dumps(packet).encode()
-    route.sendall(whatToSend)
-    print("Update forwarded")
+    for key in sockets:
+      if not key == packet["src"]:
+        self.forwardUpdate(srcif, key)
+
+      # route = self.get_route(srcif, packet["dst"])
+      # print("Get route called in update: " + str(route))
+      # whatToSend = json.dumps(packet).encode()
+      # route.sendall(whatToSend)
+      # print("Update forwarded")
     #   a) update received from a customer: send updates to all other neighbors
     #   b) update received from a peer or provider: only send updates to our customers
 
