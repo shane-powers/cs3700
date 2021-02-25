@@ -232,15 +232,14 @@ class Router:
         "netmask": self.routes[key]["netmask"],
         "peer": self.routes[key]["peer"]
       })
-    print(dumpMessage)
-    print("dump message printed")
     dumpPacket = {
       "src":  packet["dst"],          # Example: 72.65.0.1
       "dst":  packet["src"],          # Example: 72.65.0.2
       "type": "table",                   
       "msg": dumpMessage
     }
-
+    print(dumpPacket)
+    print("dump packet printed")
     self.forward(packet["src"], dumpMessage)
     return True
 
