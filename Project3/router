@@ -293,4 +293,4 @@ if __name__ == "__main__":
   PARSER.add_argument('asn', metavar='asn', type=int, help="asn")
   PARSER.add_argument('networks', metavar='networks', type=str, nargs='+', help="networks")
   ARGS = PARSER.parse_args()
-  Router(ARGS.networks).run()
+  Router(ARGS.asn, ARGS.networks).run()
