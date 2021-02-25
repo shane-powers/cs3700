@@ -242,11 +242,11 @@ class Router:
       "src":  packet["dst"],          
       "dst":  packet["src"],         
       "type": "table",                   
-      "msg": json.dumps(dumpMessage)
+      "msg": dumpMessage
     }
     print(dumpPacket)
     print("dump packet printed")
-    self.forward(packet["src"], dumpMessage)
+    self.forward(packet["src"], dumpPacket)
     return True
 
   def handle_packet(self, srcif, packet):
