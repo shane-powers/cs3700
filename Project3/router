@@ -197,8 +197,8 @@ class Router:
     # 3) potentially send copies of the announcement to neighboring routers 
     # Currently sends packet to all other connections
     for neighborIP in self.sockets:
-      print("neighborIP is : " + neighborIP)
       if not neighborIP == packet["src"]:
+        print("neighborIP is : " + neighborIP)
         self.forwardUpdate(packet["src"], neighborIP, packet["msg"])
     # TODO
     #   a) update received from a customer: send updates to all other neighbors
