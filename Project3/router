@@ -63,8 +63,6 @@ class Router:
     # TODO need to catch unknown daddr
     print("Outroutes" + str(outroutes))
     return outroutes
-  
-  
 
   def get_shortest_as_path(self, routes):
     """ select the route with the shortest AS Path """
@@ -160,7 +158,8 @@ class Router:
       #routes = self.filter_relationships(srcif, routes)
 
     print("At end of get_route: " + str(routes))
-    peer = routes[0]["peer"]
+    if routes:
+      peer = routes[0]["peer"]
     return self.sockets[peer] if peer else None
 
   def forward(self, srcif, packet):
