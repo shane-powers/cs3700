@@ -159,15 +159,25 @@ class Router:
 
   def forward(self, srcif, packet):
     """ Forward a data packet """
-    socket = self.sockets[srcif]
-    encodedPacket = json.dumps(packet).encode()
-    socket.sendall(encodedPacket)
+    self.sockets[srcif].sendall(packet.encode())
+
     return False
 
   def coalesce(self):
     """ coalesce any routes that are right next to each other """
     # TODO (this is the most difficult task, save until last)
     return False
+
+  def forwardUpdate(self, srcif, destinationIP, msg):
+    sourceIP = srcif[:-1] + "1"
+    print(sourceIP)
+    newUpdate = {
+      "type": "update",
+      "src": sourceIP,
+      "dst": destinationIP,
+      "msg": msg
+    }
+    
 
   def update(self, srcif, packet):
     """ handle update packets """
@@ -191,7 +201,7 @@ class Router:
     # TODO do not send the same packet but instead make a new update packet with expectant dest ip address
     for key in self.sockets:
       if not key == packet["src"]:
-        self.forward(key, packet)
+        self.forwardUpdate(srcif, key, packet["msg"])
 
       # route = self.get_route(srcif, packet["dst"])
       # print("Get route called in update: " + str(route))
