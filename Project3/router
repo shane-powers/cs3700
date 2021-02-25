@@ -211,7 +211,7 @@ class Router:
     }
     for neighborIP in self.sockets:
       if not neighborIP == packet["src"]:
-        self.forwardUpdate(packet["dst"], neighborIP, messageToNeighbors)
+        self.forwardUpdate(neighborIP[:-1] + "1", neighborIP, messageToNeighbors)
 
     # TODO
     #   a) update received from a customer: send updates to all other neighbors
