@@ -244,8 +244,6 @@ class Router:
       "type": "table",                   
       "msg": dumpMessage
     }
-    print(dumpPacket)
-    print("dump packet printed")
     self.forward(packet["src"], dumpPacket)
     return True
 
@@ -257,6 +255,9 @@ class Router:
     elif messageType == "revoke":
       return self.revoke(packet)
     elif messageType == "data":
+      socket = self.get_route(srcif, packet["dst"])
+      data = json.dumps(packet)
+      socket.sendall(data.encode())
       return 
     elif messageType == "no route":
       return 
