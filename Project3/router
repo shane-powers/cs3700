@@ -182,10 +182,8 @@ class Router:
   def update(self, srcif, packet):
     """ handle update packets """
     message = packet["msg"]
-    
     # 1) save a copy of the announcement in case we need it later
     self.updates[packet["src"]] = message
-
     # 2) add an entry to our forwarding table
     self.routes[packet["dst"]] = { 
       "network": message["network"], 
@@ -196,17 +194,15 @@ class Router:
       "selfOrigin": message["selfOrigin"],
       "peer": packet["src"]
       }
-
     # 3) potentially send copies of the announcement to neighboring routers 
     # Currently sends packet to all other connections
-    for key in self.sockets:
-      if not key == packet["src"]:
-        self.forwardUpdate(packet["src"], key, packet["msg"])
-
+    for neighborIP in self.sockets:
+      print("neighborIP is : " + neighborIP)
+      if not neighborIP == packet["src"]:
+        self.forwardUpdate(packet["src"], neighborIP, packet["msg"])
     # TODO
     #   a) update received from a customer: send updates to all other neighbors
     #   b) update received from a peer or provider: only send updates to our customers
-
     return False
 
   def revoke(self, packet):
