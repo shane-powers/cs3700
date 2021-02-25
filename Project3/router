@@ -173,7 +173,7 @@ class Router:
   def forwardUpdate(self, srcif, destinationIP, msg):
     newUpdate = {
       "type": "update",
-      "src": sourceIP,
+      "src": srcif,
       "dst": destinationIP,
       "msg": msg
     }
@@ -199,11 +199,13 @@ class Router:
 
     # 3) potentially send copies of the announcement to neighboring routers 
     # Currently sends packet to all other connections
+    newASPath = message["ASPath"]
+    newASPath.append(self.asn)
     messageToNeighbors = { 
       "network": message["network"], 
       "netmask": message["netmask"], 
       "localpref": message["localpref"], 
-      "ASPath": message["ASPath"].append(self.asn), 
+      "ASPath": newASPath, 
       "origin": message["origin"], 
       "selfOrigin": message["selfOrigin"]
     }
