@@ -173,7 +173,7 @@ class Router:
     sourceIP = srcif[:-1] + "1"
     newUpdate = {
       "type": "update",
-      "src": srcif,
+      "src": sourceIP,
       "dst": destinationIP,
       "msg": msg
     }
@@ -232,6 +232,8 @@ class Router:
         "netmask": self.routes[key]["netmask"],
         "peer": self.routes[key]["peer"]
       })
+    print(dumpMessage)
+    print("dump message printed")
     dumpPacket = {
       "src":  packet["dst"],          # Example: 72.65.0.1
       "dst":  packet["src"],          # Example: 72.65.0.2
