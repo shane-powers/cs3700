@@ -228,9 +228,9 @@ class Router:
     dumpMessage = []
     for key in self.routes:
       dumpMessage.append({
-        "network": routes[key]["network"],
-        "netmask": routes[key]["netmask"],
-        "peer": routes[key]["peer"]
+        "network": self.routes[key]["network"],
+        "netmask": self.routes[key]["netmask"],
+        "peer": self.routes[key]["peer"]
       })
     dumpPacket = {
       "src":  packet["dst"],          # Example: 72.65.0.1
