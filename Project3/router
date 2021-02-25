@@ -236,7 +236,7 @@ class Router:
       "src":  packet["dst"],          # Example: 72.65.0.1
       "dst":  packet["src"],          # Example: 72.65.0.2
       "type": "table",                   
-      "msg": dumpMessage
+      "msg": json.dumps(dumpMessage)
     }
     print(dumpPacket)
     print("dump packet printed")
