@@ -197,17 +197,13 @@ class Router:
       "peer": packet["src"]
       }
 
-    # 3) potentially send copies of the announcement to neighboring routers 'getRoute()'
-    # TODO do not send the same packet but instead make a new update packet with expectant dest ip address
+    # 3) potentially send copies of the announcement to neighboring routers 
+    # Currently sends packet to all other connections
     for key in self.sockets:
       if not key == packet["src"]:
         self.forwardUpdate(srcif, key, packet["msg"])
 
-      # route = self.get_route(srcif, packet["dst"])
-      # print("Get route called in update: " + str(route))
-      # whatToSend = json.dumps(packet).encode()
-      # route.sendall(whatToSend)
-      # print("Update forwarded")
+    # TODO
     #   a) update received from a customer: send updates to all other neighbors
     #   b) update received from a peer or provider: only send updates to our customers
 
@@ -229,22 +225,20 @@ class Router:
 
   def dump(self, packet):
     """ handles dump table requests """
-    # TODO
-
-    '''
-    self.sockets[destIP].send([data below])
-    {
-      "src":  "<ip_addr>",          # Example: 72.65.0.1
-      "dst":  "<ip_addr>",          # Example: 72.65.0.2
+    dumpMessage = []
+    for key in self.routes:
+      dumpMessage.append({
+        "network": routes[key]["network"],
+        "netmask": routes[key]["netmask"],
+        "peer": routes[key]["peer"]
+      })
+    dumpPacket = {
+      "src":  packet["dst"],          # Example: 72.65.0.1
+      "dst":  packet["src"],          # Example: 72.65.0.2
       "type": "table",                   
-      "msg": \[
-        {"network" : "<ip_addr>", "netmask" : "<ip_addr_netmask>", "peer" : "<ip_addr>"},
-        {"network" : "<ip_addr>", "netmask" : "<ip_addr_netmask>", "peer" : "<ip_addr>"},
-        ...
-      \]
+      "msg": dumpMessage
     }
-    '''
-
+    self.forward(packet["src"], dumpMessage)
     return True
 
   def handle_packet(self, srcif, packet):
@@ -254,49 +248,12 @@ class Router:
       return self.update(srcif, packet)
     elif messageType == "revoke":
       return self.revoke(packet)
-    elif messageType == "data": 
-      routeToSend = self.get_route(srcif, packet["dst"])
-
-      if routeToSend == None:
-        noRoute = {"src":srcif,"dst":packet["src"],"type":"no route","msg":{}}
-        self.forward(srcif, noRoute)
-      else:
-        self.forward(srcif, packet)
-
-
-
-
-
-
-
-
-      # all the following below takes place in 'getRoute()' method above
-
-      # 0) if we dont have a route, send a "no route" message back to the source that sent us data
-
-      # 1) if we know exactly one ppossible route, forward to the appropriate port
-
-      # 2) then, we do longest prefix match on what we currently have in our forwarding table
-
-      # 3) finally, 
-      #   a) The path with the highest "localpref" wins. If the "localpref"s are equal...
-      #   b) The path with "selfOrigin" = true wins. If all selfOrigins are the equal...
-      #   c) The path with the shortest "ASPath" wins. If multiple routes have the shortest length...
-      #   d) The path with the best "origin" wins, were IGP > EGP > UNK. If multiple routes have the best origin...
-      #   e) The path from the neighbor router with the lowest IP address.
-
-      # BUT should we forward or drop
-      # 4) if the source or destination router is a customer, you should forward the data
-      # 5) if the source router is a peer or a provider, and the destination is a peer or privider, then drop the data message
-      #   a) in this case, send a "no route" message back to the source
-
+    elif messageType == "data":
+      return 
     elif messageType == "no route":
-      return
-        
-        
-        
+      return 
     elif messageType == "dump":
-      # 1) must respond with a "table" message that contains a copy of the current forwarding table in our router
+      self.dump(packet)
       return
     elif messageType == "table":
       return
