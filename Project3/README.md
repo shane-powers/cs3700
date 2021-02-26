@@ -1,0 +1,28 @@
+# Router Implementation Milestone
+
+## High-Level Approach
+- To get started, we followed the structure of the Python skeleton code we were provided, as well as the step by step order of completion provided to us in the project description. Based on this path of compoletion, we started with wrapping our heads around how the starter code worked and what functionality it initially provided us with. 
+- Next, we implemented a switch case for ALL possible message types with filler data inside the provided `handle_packet()` method. We walked through the project description and added as many comments inside this switch statement and subsequent helper methods, to give documentation to the expectations of our router. 
+- After the comments were in place, outlining all of the work that we had to do, we got started with properly handling an 'update' message recieved by our router. We did our best to follow documentation, but had to overcome some functional misunderstandings, as well as some problems encountered with writing in Python coming from JavaScript. Eventually, we were able to successfully store updates to our router, store those updates to our forwarding table, and forward those updates on to all of our neighbors. (in the future we will include functionality to only send to customers)
+- Once we had successfully implemented update messages, we then started work on 'dump' messages. Again, we encountered some issues with sending JSON data over a socket in Python, but after we overcame this, it was very straightforward sending a 'table' message with our forwarding table back to the router who sent us a 'dump' message.
+- To wrap up the milestone, we included functionality for the 'data' message. This was also relatively straighforward, as we just needed to use the `get_route()` method to and our stored updates, which have already been done, to find the proper neighbor to forward the data message along to to reach its destination. 
+
+## Challenges Faced
+### 1) Refamiliarization with Python
+- Many of the frustrations and obstacles we faced during this assignement were due to our lack of familiarization with Python. Both partners came from other languages, and there are subtle nuances of Python that caused a headache upon interpretation. We constantly found ourselves going back to code whose logic we knew was sound, to fix syntax errors. At some point we added a Pylint pluggin to help identify issues before they cause a headache.
+
+### 2) Understanding the Provided Starter Code
+- The initial challenge we had to overcome was developing an understanding of the current state of the program in the starter code provided. The starter code gave us a ton of functionality but we had to identify the line in the sand where we had to begin our implementation on top of the provided foundation. This was not too bad, as the method, and variable names were very straightforward, and the starter code handled the interactions with sockets and the network argument sent to the router.
+- Additionally, we needed to add an additional argument to the program starter code. The starter code was not equiped to handle an ASN input on the command line, so we had to add this functionality. 
+
+### 3) Realizing the Expectations of a Router
+- Even after following the project documentation to a 'T', we ran into some obstacles with what our router was supposed to out put and 'from' who and 'to' who. Through trial and error, as well as some Google research, we were able to understand how each of the current implemented messages worked, and make sure that we were sending the packet from the correct source, to the correct destination, and correctly modified the packet. One of the bigger issues here to overcome was appending our own ASN to the update messages we forwarded to our neighbors. That issue stumped us for a while as we thought the issue was with our source and destination addresses for the packet we sent.
+
+### 3) Realizing Expectations of the Simulator
+- For a while, we did not realize how to send double quotes over the socket to the simulator. This could also be seen as a Python issue, but we used several libraries and methods to convert a JSON to string, but stumbled into `json.dumps()` later than we would have liked to. 
+- Additionally, the errors from the simulator can be quite ambiguous, so when we got an issue, it was hard to diagnose what actually caused the issue. Through time this became easier but in the beginning it was pretty frustrating.
+
+## Overview of Tests
+- Initially, many of the tests we ran were trial and error with the simulator. We would try to send some data, and would see if the simulator would return an error. We carried on this method of testing through the whole milestone, becasue it was the most direct in identifying if there was an issue in the message we were trying to send to the routers in the simulator.
+- Many of the issues faced by the Python implementation of the router we were able to test in the command line using a Python interpreter. Especially with testing variations of string parsing or json dumping, we wrote our command on the command line before including it in our solution to see if we got the expected result. 
+- So many print statements. At every step of completing the milestone, we had a print statment to show what we were sending, or receiving, or parsing to make sure it is exactly what we think it is. The simulator errors only went so far to tell us what was wrong or what we can do to improve, but our print statements never failed us. 
