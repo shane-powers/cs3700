@@ -55,9 +55,12 @@ class Router:
 
   def lookup_routes(self, daddr):
     """ Lookup all valid routes for an address """
+    print("looking for this address: ", daddr)
     outroutes = []
     prefix = daddr[:3]
+    print("prefix of this addr: ", prefix)
     for addr in self.routes:
+      print("comparing with: ", addr[:3])
       if prefix == addr[:3]:
         outroutes.append(self.routes[addr])
     # TODO need to catch unknown daddr
@@ -261,23 +264,16 @@ class Router:
       return self.revoke(packet)
     elif messageType == "data":
       socket = self.get_route(srcif, packet["dst"])
-      print("our socket is :")
-      print(socket)
       if socket:
-        print("socket found")
         data = json.dumps(packet)
         socket.sendall(data.encode())
       else:
-        print("socket not found")
         data = {
           "src":  srcif,         
           "dst":  packet["src"],          
           "type": "no route",                   
           "msg":  {}
         }
-        print("sending this data: ")
-        print(data)
-        print("to this destination: ", srcif)
         self.forward(srcif, data)
       return 
     elif messageType == "no route":
