@@ -53,15 +53,18 @@ class Router:
       self.sockets[network].connect(network)
       self.relations[network] = relation
 
+  def decimalToBinary(ip):
+    return '.'.join([bin(int(x)+256)[3:] for x in ip.split('.')])
+
   def lookup_routes(self, daddr):
     """ Lookup all valid routes for an address """
     print("looking for this address: ", daddr)
     outroutes = []
-    prefix = daddr[:3]
+    prefix = str(decimalToBinary(daddr))[:5]
     print("prefix of this addr: ", prefix)
     for addr in self.routes:
-      print("comparing with: ", addr[:3])
-      if prefix == addr[:3]:
+      print("comparing with: ", str(decimalToBinary(addr))[:5])
+      if prefix == str(decimalToBinary(addr))[:5]:
         outroutes.append(self.routes[addr])
     # TODO need to catch unknown daddr
     print("Initial lookup routes: " + str(outroutes))
