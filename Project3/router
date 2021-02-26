@@ -61,6 +61,7 @@ class Router:
       if prefix == addr[:3]:
         outroutes.append(self.routes[addr])
     # TODO need to catch unknown daddr
+    print("Initial lookup routes: " + str(outroutes))
     return outroutes
 
   def get_shortest_as_path(self, routes):
@@ -136,20 +137,27 @@ class Router:
     """ Select the best route for a given address """
     # TODO
     routes = self.lookup_routes(daddr)
+    print("From lookup_routes: " + str(routes))
     # Rules go here
     if routes:
       # 1. Highest Preference
       routes = self.get_highest_preference(routes)
+      # print("1) highest: " + str(routes))
       # 2. Self Origin
       routes = self.get_self_origin(routes)
+      # print("2) self-origin" + str(routes))
       # 3. Shortest ASPath
       routes = self.get_shortest_as_path(routes)
+      # print("3) ASPath: " + str(routes))
       # 4. EGP > IGP > UNK
       routes = self.get_origin_routes(routes)
+      # print("4) origin routes: " + str(routes))
       # 5. Lowest IP Address
       # TODO
       # Final check: enforce peering relationships
       #routes = self.filter_relationships(srcif, routes)
+
+    print("Filtered routes: " + str(routes))
     peer = None
     if routes:
       peer = routes[0]["peer"]
@@ -253,16 +261,23 @@ class Router:
       return self.revoke(packet)
     elif messageType == "data":
       socket = self.get_route(srcif, packet["dst"])
+      print("our socket is :")
+      print(socket)
       if socket:
+        print("socket found")
         data = json.dumps(packet)
         socket.sendall(data.encode())
       else:
+        print("socket not found")
         data = {
-          "src":  srcif,          # Example: 172.65.0.1
-          "dst":  packet["src"],          # Example: 134.0.88.77
+          "src":  srcif,         
+          "dst":  packet["src"],          
           "type": "no route",                   
           "msg":  {}
         }
+        print("sending this data: ")
+        print(data)
+        print("to this destination: ", srcif)
         self.forward(srcif, data)
       return 
     elif messageType == "no route":
