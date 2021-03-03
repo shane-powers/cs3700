@@ -63,7 +63,9 @@ class Router:
     potentialRoutes = []
     longestPrefix = 0
     for addr in self.routes:
+      print("comparing: " + str(addr) + " against: " + str(daddr))
       prefix = os.path.commonprefix([self.decimalToBinaryString(daddr), self.decimalToBinaryString(addr)])
+      print("common prefix: " + str(prefix))
       if len(prefix) > longestPrefix:
         longestPrefix = len(prefix)
         potentialRoutes = [self.routes[addr]]
