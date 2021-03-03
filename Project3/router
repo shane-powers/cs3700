@@ -5,6 +5,7 @@ import argparse
 import json
 import select
 import socket
+import os
 
 ##########################################################################################
 
@@ -58,14 +59,22 @@ class Router:
     binary = ".".join([bin(int(x)+256)[3:] for x in ip.split('.')])
     return str(binary)
 
+  def findLongestPrefix(self, daddr):
+    potentialRoutes = []
+    longestPrefix = 0
+    for addr in self.routes:
+      prefix = os.path.commonprefix([self.decimalToBinaryString(daddr), self.decimalToBinaryString(addr)])
+      print("the prefix is : " + prefix)
+      if len(prefix) > longestPrefix:
+        longestPrefix = len(prefix)
+        potentialRoutes = [self.routes[addr]]
+      elif len(prefix) == longestPrefix:
+        potentialRoutes.append(self.routes[addr])
+    return potentialRoutes
+
   def lookup_routes(self, daddr):
     """ Lookup all valid routes for an address """
-    outroutes = []
-    # TODO need to compare in another way than the 3 numbers
-    prefix = daddr[:3]
-    for addr in self.routes:
-      if prefix == addr[:3]:
-        outroutes.append(self.routes[addr])
+    outroutes = self.findLongestPrefix(daddr)
     return outroutes
 
   def get_shortest_as_path(self, routes):
