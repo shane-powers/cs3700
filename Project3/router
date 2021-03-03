@@ -43,7 +43,7 @@ class Router:
   """ Your Router """
   def __init__(self, asn, networks):
     self.asn = asn
-    self.routes = {} # { network: num, netmask: num, localpref: num, ASPath: [], origin: string, selfOrigin: boolean }
+    self.routes = [] 
     self.updates = {}
     self.relations = {}
     self.sockets = {}
@@ -60,17 +60,18 @@ class Router:
     return str(binary)
 
   def findLongestPrefix(self, daddr):
+    """ returns network(s) with the longest prefix between the daddr and all values in our routing table """
     potentialRoutes = []
     longestPrefix = 0
-    for addr in self.routes:
-      print("comparing: " + str(daddr) + " against: " + str(addr))
-      prefix = os.path.commonprefix([self.decimalToBinaryString(daddr), self.decimalToBinaryString(addr)])
-      print("common prefix: " + str(prefix))
+    for route in self.routes:
+      #print("comparing: " + str(daddr) + " against: " + str(addr))
+      prefix = os.path.commonprefix([self.decimalToBinaryString(daddr), self.decimalToBinaryString(route["network"])])
+      #print("common prefix: " + str(prefix))
       if len(prefix) > longestPrefix:
         longestPrefix = len(prefix)
-        potentialRoutes = [self.routes[addr]]
+        potentialRoutes = [route]
       elif len(prefix) == longestPrefix:
-        potentialRoutes.append(self.routes[addr])
+        potentialRoutes.append(route)
     return potentialRoutes
 
   def lookup_routes(self, daddr):
@@ -165,16 +166,16 @@ class Router:
     if routes:
       # 1. Highest Preference
       routes = self.get_highest_preference(routes)
-      print("1: " + str(routes))
+      #print("1: " + str(routes))
       # 2. Self Origin
       routes = self.get_self_origin(routes)
-      print("2: " + str(routes))
+      #print("2: " + str(routes))
       # 3. Shortest ASPath
       routes = self.get_shortest_as_path(routes)
-      print("3: " + str(routes))
+      #print("3: " + str(routes))
       # 4. EGP > IGP > UNK
       routes = self.get_origin_routes(routes)
-      print("4: " + str(routes))
+      #print("4: " + str(routes))
       # 5. Lowest IP Address
       # TODO
       # Final check: enforce peering relationships
@@ -213,7 +214,7 @@ class Router:
     self.updates[message["network"]] = packet
 
     # 2) add an entry to our forwarding table
-    self.routes[message["network"]] = { 
+    self.routes.append({ 
       "network": message["network"], 
       "netmask": message["netmask"], 
       "localpref": message["localpref"], 
@@ -221,7 +222,7 @@ class Router:
       "origin": message["origin"], 
       "selfOrigin": message["selfOrigin"],
       "peer": packet["src"]
-      }
+      })
 
     # 3) potentially send copies of the announcement to neighboring routers 
     # Currently sends packet to all other connections
@@ -285,11 +286,11 @@ class Router:
   def dump(self, packet):
     """ handles dump table requests """
     dumpMessage = []
-    for key in self.routes:
+    for route in self.routes:
       dumpMessage.append({
-        "network": self.routes[key]["network"],
-        "netmask": self.routes[key]["netmask"],
-        "peer": self.routes[key]["peer"]
+        "network": route["network"],
+        "netmask": route["netmask"],
+        "peer": route["peer"]
       })
     dumpPacket = {
       "src":  packet["dst"],          
