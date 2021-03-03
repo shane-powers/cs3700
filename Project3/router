@@ -282,7 +282,7 @@ class Router:
       tempRoute = self.routes[index]
       print(tempRoute["network"])
       print(message)
-      if tempRoute["network"] == message["network"]:
+      if tempRoute["network"] == message[0]["network"]:
         self.routes.pop(index)
       
     # 3) potentially send copies of the announcement to neighboring routers
