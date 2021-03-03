@@ -44,7 +44,8 @@ class Router:
   def __init__(self, asn, networks):
     self.asn = asn
     self.routes = [] 
-    self.updates = {}
+    self.updates = []
+    self.revocation = []
     self.relations = {}
     self.sockets = {}
     for relationship in networks:
@@ -224,7 +225,7 @@ class Router:
     message = packet["msg"]
 
     # 1) save a copy of the announcement in case we need it later
-    self.updates[message["network"]] = packet
+    self.updates.append(packet)
 
     # 2) add an entry to our forwarding table
     self.routes.append({ 
@@ -272,7 +273,7 @@ class Router:
     message = packet["msg"]
 
     # 1) save a copy of the announcement in case we need it later
-    self.updates[message["network"]] = packet
+    self.revocation.append(packet)
 
     packetCopy = packet
     # 2) remove the dead entry from the forwarding table
