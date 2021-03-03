@@ -279,7 +279,8 @@ class Router:
     # 2) remove the dead entry from the forwarding table
     for index in range(0,len(self.routes)):
       print(self.routes[index])
-      if self.routes[index]["network"] == message["network"]:
+      tempRoute = self.routes[index]
+      if tempRoute["network"] == message["network"]:
         self.routes.pop(index)
       
     # 3) potentially send copies of the announcement to neighboring routers
