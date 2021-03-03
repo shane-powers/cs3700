@@ -126,10 +126,10 @@ class Router:
         selfOrigin.append(routes[i])
       else:
         notSelfOrigin.append(routes[i])
-    if len(notSelfOrigin) > 0:
-      return notSelfOrigin
-    else:
+    if len(selfOrigin) > 0:
       return selfOrigin
+    else:
+      return notSelfOrigin
 
   def get_origin_routes(self, routes):
     """ select origin routes: IGP > EGP > UNK """
