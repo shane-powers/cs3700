@@ -282,8 +282,9 @@ class Router:
       tempRoute = self.routes[index]
       print(tempRoute["network"])
       print(message)
-      if tempRoute["network"] == message[0]["network"]:
-        self.routes.pop(index)
+      for msgIndex in range(len(message-1)):
+        if tempRoute["network"] == message[msgIndex]["network"]:
+          self.routes.pop(index)
       
     # 3) potentially send copies of the announcement to neighboring routers
     revokeRelation = self.relations[packet["src"]]
