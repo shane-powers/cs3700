@@ -161,7 +161,7 @@ class Router:
     """ Select the best route for a given address """
     # TODO
     routes = self.lookup_routes(daddr)
-    print("0: " + str(routes))
+    #print("0: " + str(routes))
     # Rules go here
     if routes:
       # 1. Highest Preference
