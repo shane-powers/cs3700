@@ -295,6 +295,7 @@ class Router:
       "type": "table",                   
       "msg": dumpMessage
     }
+    print("dumping: " + str(dumpMessage))
     self.forward(packet["src"], dumpPacket)
     return True
 
