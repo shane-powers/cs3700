@@ -278,7 +278,7 @@ class Router:
     packetCopy = packet
     # 2) remove the dead entry from the forwarding table
     for index in range(0,len(self.routes)):
-      print(routes[index])
+      print(self.routes[index])
       if self.routes[index]["network"] == message["network"]:
         self.routes.pop(index)
       
