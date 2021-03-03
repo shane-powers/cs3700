@@ -277,7 +277,7 @@ class Router:
 
     packetCopy = packet
     # 2) remove the dead entry from the forwarding table
-    for index in range(0,len(self.routes)):
+    for index in range(len(self.routes)-1):
       print(self.routes[index])
       tempRoute = self.routes[index]
       print(tempRoute["network"])
