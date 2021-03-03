@@ -248,7 +248,7 @@ class Router:
       for key in self.sockets:
         socketRelation = self.relations[socket]
         for key in self.sockets:
-          if socketRelation = "cust":
+          if socketRelation == "cust":
             send_new_packet(key, packetCopy)
 
       
