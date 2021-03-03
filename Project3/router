@@ -281,6 +281,7 @@ class Router:
       print(self.routes[index])
       tempRoute = self.routes[index]
       print(tempRoute["network"])
+      print(message)
       if tempRoute["network"] == message["network"]:
         self.routes.pop(index)
       
