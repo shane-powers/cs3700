@@ -224,12 +224,46 @@ class Router:
     """ handle revoke packets """
     # TODO
     # 1) save a copy of the revocation, in case we need it later
+
+    message = packet["msg"]
+
+    # 1) save a copy of the announcement in case we need it later
+    self.updates[message["network"]] = packet
+
+    packetCopy = packet
     # 2) remove the dead entry from the forwarding table
+    self.routes.pop(message["network"])
     # 3) potentially send copies of the announcement to neighboring routers
-    #   a) update received from a customer: send revoke to all other neighbors
-    #   b) update received from a peer or provider: only send revoke to our customers
+    revokeRelation = self.relations[packet["src"]]
+    
+    if revokeRelation == "cust":
+      #customer
+      # a) update received from a customer: send revoke to all other neighbors
+      for key in self.sockets:
+        if key != packet["src"]:
+          send_new_packet(key, packetCopy)
+    elif revokeRelation == "prov" or revokeRelation == "peer":
+      #provider & peer
+      # b) update received from a peer or provider: only send revoke to our customers
+      for key in self.sockets:
+        socketRelation = self.relations[socket]
+        for key in self.sockets:
+          if socketRelation = "cust":
+            send_new_packet(key, packetCopy)
+
+      
+
+
+
+    
 
     return True
+  
+  def send_new_packet(self, socket, packet):
+    packetCopySrc = ('.').join(socket.split('.', 3)[:3]) + '.1'
+    packet[SRCE] = packetCopySrc
+    packet[DEST] = socket
+    self.sockets[socket].sendall(json.dumps(packet).encode())
 
   def dump(self, packet):
     """ handles dump table requests """
