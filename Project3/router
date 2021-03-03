@@ -277,7 +277,10 @@ class Router:
 
     packetCopy = packet
     # 2) remove the dead entry from the forwarding table
-    self.routes.pop(message["network"])
+    for index in range(0,len(self.routes)):
+      if self.routes[index]["network"] == message["network"]:
+        self.routes.pop(index)
+      
     # 3) potentially send copies of the announcement to neighboring routers
     revokeRelation = self.relations[packet["src"]]
     
