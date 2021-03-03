@@ -153,21 +153,21 @@ class Router:
     """ Select the best route for a given address """
     # TODO
     routes = self.lookup_routes(daddr)
-    print("0: " + routes)
+    print("0: " + str(routes))
     # Rules go here
     if routes:
       # 1. Highest Preference
       routes = self.get_highest_preference(routes)
-      print("1: " + routes)
+      print("1: " + str(routes))
       # 2. Self Origin
       routes = self.get_self_origin(routes)
-      print("2: " + routes)
+      print("2: " + str(routes))
       # 3. Shortest ASPath
       routes = self.get_shortest_as_path(routes)
-      print("3: " + routes)
+      print("3: " + str(routes))
       # 4. EGP > IGP > UNK
       routes = self.get_origin_routes(routes)
-      print("4: " + routes)
+      print("4: " + str(routes))
       # 5. Lowest IP Address
       # TODO
       # Final check: enforce peering relationships
