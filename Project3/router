@@ -156,7 +156,7 @@ class Router:
     outroutes = []
     currentLowest = -1
     for route in routes:
-      currentIP = int(".".join(route["peer"]))
+      currentIP = int("".join(route["peer"].split(".")))
       if currentLowest == -1 or currentIP > currentLowest:
         outroutes = [route]
       elif currentIP == currentLowest:
