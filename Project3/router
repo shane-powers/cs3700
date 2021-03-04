@@ -211,7 +211,8 @@ class Router:
     return False
 
   def decrementNetmask(self, netmask):
-    binaryString = "".join(self.decimalToBinaryString("255.255.0.0").split("."))
+    binaryString = "".join(self.decimalToBinaryString(netmask).split("."))
+
     newNetmask = str(bin(int(binaryString, 2) - 1)) 
     newNetmask = newNetmask[2:] 
     print("before replace: \n" + str(newNetmask))
