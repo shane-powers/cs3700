@@ -207,13 +207,14 @@ class Router:
     socket.sendall(data.encode())
     return False
 
-  def coalesce(self, packet):
-    """ coalesce any routes that are right next to each other """
-    for route in self.routes:
-      if(packet["src"] == route["peer"] and packet['msg'][localpref])
-      prefix = os.path.commonprefix([self.decimalToBinaryString(packet["msg"]["network"]), self.decimalToBinaryString(route["network"])])
-      print(prefix)
-    return False
+  # def coalesce(self, packet):
+  #   """ coalesce any routes that are right next to each other """
+  #   for route in self.routes:
+  #     if(packet["src"] == route["peer"] and packet["msg"][""]packet['msg']["localpref"] == route["localpref"]):
+  
+  #     prefix = os.path.commonprefix([self.decimalToBinaryString(packet["msg"]["network"]), self.decimalToBinaryString(route["network"])])
+  #     print(prefix)
+  #   return False
 
   def send_new_packet(self, socket, packet):
     #Create new packet src
