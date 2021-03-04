@@ -211,16 +211,12 @@ class Router:
     return False
 
   def decrementNetmask(self, netmask, diff):
-    print("0:\n" + str(netmask))
     binaryString = "".join(self.decimalToBinaryString(netmask).split("."))
-    print("1: Binary string:\n" + str(binaryString))
     newNetmask = binaryString[2:] 
-    print("2: before replace: \n" + str(newNetmask))
-    if diff == -256:
+    if diff < 0:
       newNetmask = newNetmask.replace("10", "11")
-    elif diff == 1:
+    elif diff > 0:
       newNetmask = newNetmask.replace("10", "00")
-    print("3: after replace: \n" + str(newNetmask))
     output = ""
     output = output + str(int(newNetmask[:8],2)) + "."
     output = output + str(int(newNetmask[8:16],2)) + "."
@@ -236,22 +232,16 @@ class Router:
     #Compare supplied packet to entries in forwarding table
     for route in self.routes:
     #Check if supplied packet and route have the same attributes
-      print("1: now comparing with: \n" + str(route))
       if(packet["src"] == route["peer"] and packet["msg"]["ASPath"] == route["ASPath"] and packet['msg']["localpref"] == route["localpref"]):
-        print("2: now comparing with: \n" + str(route))
         if(packet["msg"]["origin"] == route["origin"] and packet["msg"]["selfOrigin"] == route["selfOrigin"]):
           #Check if packet and route are numerically adjecent
-          print("3: comparing networks: \n" + str(route))
           routeNet = "".join(self.decimalToBinaryString(route["network"]).split(".")) # decimal string
           packetNet = "".join(self.decimalToBinaryString(packet["msg"]["network"]).split("."))
-          print("4: ahhh: \n" + str(routeNet) + " vs \n" + str(packetNet))
-          diff = int(routeNet, 2) - int(packetNet, 2)
-          if diff == 1 or diff == -256:
-            print("5: diff was: " + str(diff))
+          diff = int(routeNet, 2) - int(packetNet, 2) # 1 2 -1 -2
+          if diff == 1 or diff == 2 or diff == -256 or diff == -255:
             #Do the actual coalescing
             routeNetmask = route["netmask"]
             route["netmask"] = self.decrementNetmask(routeNetmask, diff)
-            print("6: netmask after: " + str(routeNetmask))
             return True
     return False
 
