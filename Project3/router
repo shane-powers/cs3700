@@ -300,9 +300,8 @@ class Router:
       # b) update received from a peer or provider: only send revoke to our customers
       for key in self.sockets:
         socketRelation = self.relations[socket]
-        for key in self.sockets:
-          if socketRelation == "cust":
-            self.send_new_packet(key, packetCopy)
+        if socketRelation == "cust":
+          self.send_new_packet(key, packetCopy)
     return True
 
   def dump(self, packet):
