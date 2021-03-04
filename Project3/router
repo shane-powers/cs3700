@@ -170,8 +170,7 @@ class Router:
     sourceRelation = self.relations[srcif]
     for route in routes:
       destinationRelation = self.relations[route["peer"]]
-      if sourceRelation == "cust" or destinationRelation == "cust": # might need to refine logic
-        print("sending: " + sourceRelation + ", to: " + destinationRelation)
+      if sourceRelation == "cust" or destinationRelation == "cust": 
         outroutes.append(route)
     return outroutes
 
@@ -211,25 +210,27 @@ class Router:
     socket.sendall(data.encode())
     return False
 
-  # def coalesce(self, packet):
-  #   """ coalesce any routes that are right next to each other """
-  #   for route in self.routes:
-  #     #Compare supplied packet to entries in forwarding table
-        #Check if supplied packet and route have the same attributes
-  #     if(packet["src"] == route["peer"] and packet["msg"]["ASPath"] == socket["ASPath"] packet['msg']["localpref"] == route["localpref"]):
-  #       if(packet["msg"]["origin"] == socket["origin"] and packet["msg"]["selfOrigin"] == socket["selfOrigin"]):
+  def compareNetmask(self, route, packet)
+
+  def coalesce(self, packet):
+    """ coalesce any routes that are right next to each other """
+    #Compare supplied packet to entries in forwarding table
+    for route in self.routes:
+      #Check if supplied packet and route have the same attributes
+      if(packet["src"] == route["peer"] and packet["msg"]["ASPath"] == socket["ASPath"] packet['msg']["localpref"] == route["localpref"]):
+        if(packet["msg"]["origin"] == socket["origin"] and packet["msg"]["selfOrigin"] == socket["selfOrigin"]):
           
 
-  #     prefix = os.path.commonprefix([self.decimalToBinaryString(packet["msg"]["network"]), self.decimalToBinaryString(route["network"])])
-  #     print(prefix)
-  #   return False
+      prefix = os.path.commonprefix([self.decimalToBinaryString(packet["msg"]["network"]), self.decimalToBinaryString(route["network"])])
+      print(prefix)
+    return False
 
-  def send_new_packet(self, socket, packet):
+  def send_new_packet(self, route, packet):
     #Create new packet src
     packetCopySrc = ('.').join(socket.split('.', 3)[:3]) + '.1'
     packet[SRCE] = packetCopySrc
-    packet[DEST] = socket
-    self.sockets[socket].sendall(json.dumps(packet).encode())
+    packet[DEST] = route
+    self.sockets[route].sendall(json.dumps(packet).encode())
 
   def update(self, srcif, packet):
     """ handle update packets """
@@ -346,7 +347,7 @@ class Router:
         socket.sendall(data.encode())
       else:
         data = {
-          "src":  srcif,         
+          "src":  srcif[:-1] + "1",         
           "dst":  packet["src"],          
           "type": "no route",                   
           "msg":  {}
