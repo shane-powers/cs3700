@@ -224,9 +224,22 @@ class Router:
     output = output + str(int(newNetmask[24:32],2))
     
     return output
+
+    """
+    shared mask of 255.255.255.0
+
+    192.168.0.0 => 
+    192.168.1.0 => 192.168.0.0 {255.255.254.0}
+    192.168.2.0 => 
+    192.168.3.0 => 192.168.2.0 {255.255.254} => 192.168.0.0 {255.255.253.0}
+        ^                    ^                                    ^
+
+
+
+    """
     
 
-  def coalesce(self, packet, tableRoute):
+  def coalesce(self, packet):
     """ coalesce any routes that are right next to each other """
     #Compare supplied packet to entries in forwarding table
     for route in self.routes:
@@ -239,16 +252,29 @@ class Router:
           diff = int(routeNet, 2) - int(packetNet, 2) # 1 2 -1 -2
           print("diff = " + str(diff))
           if diff == 1 or diff == 2 or diff == -256 or diff == -768 or diff == -512:
+
+            routeIndex = self.routes.index(route)
+            self.routes.pop(routeIndex)
+
             # remove current routes in table
-            packetIndex = self.routes.index(tableRoute)
-            print("PACKET INDEX " + str(packetIndex))
-            self.routes.pop(packetIndex)
+            # packetIndex = self.routes.index(tableRoute)
+            # print("PACKET INDEX " + str(packetIndex))
+            # self.routes.pop(packetIndex)
             #Do the actual coalescing
 
             # add coalesced route
-            routeNetmask = route["netmask"]
-            route["netmask"] = self.decrementNetmask(routeNetmask, diff)
-            return self.coalesce(route)
+            routeNetmask = packet["msg"]["netmask"]
+            packet["msg"]["netmask"] = self.decrementNetmask(routeNetmask, diff)
+            return self.coalesce(packet)
+    self.routes.append({ 
+              "network": packet["msg"]["network"], 
+              "netmask": packet["msg"]["netmask"], 
+              "localpref": packet["msg"]["localpref"], 
+              "ASPath": packet["msg"]["ASPath"], 
+              "origin": packet["msg"]["origin"], 
+              "selfOrigin": packet["msg"]["selfOrigin"],
+              "peer": packet["msg"]["src"]
+              })
     return False
 
   def send_new_packet(self, route, packet):
@@ -268,19 +294,7 @@ class Router:
     # 2) add an entry to our forwarding table
     newASPath = message["ASPath"]
     newASPath.append(self.asn)
-    
-    tableRoute = { 
-      "network": message["network"], 
-      "netmask": message["netmask"], 
-      "localpref": message["localpref"], 
-      "ASPath": message["ASPath"], 
-      "origin": message["origin"], 
-      "selfOrigin": message["selfOrigin"],
-      "peer": packet["src"]
-      }
-    
-    self.routes.append(tableRoute)
-    self.coalesce(packet, tableRoute)
+    self.coalesce(packet)
 
     # 3) potentially send copies of the announcement to neighboring routers 
     # Currently sends packet to all other connections
