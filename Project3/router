@@ -195,13 +195,10 @@ class Router:
       # 5. Lowest IP Address
       routes = self.get_lowest_ip(routes)
       #print("5: " + str(routes))
-      # 6. enforce peering relationships
-      routes = self.filter_relationships(srcif, routes)
-      #print("6: " + str(routes))
     peer = None
     if routes:
       peer = routes[0]["peer"]
-    return self.sockets[peer] if peer else None
+    return peer
 
   def forward(self, srcif, packet):
     """ Forward a data packet """
@@ -210,21 +207,16 @@ class Router:
     socket.sendall(data.encode())
     return False
 
-  def coalesce(self):
+  def coalesce(self, packet):
     """ coalesce any routes that are right next to each other """
-    # TODO (this is the most difficult task, save until last)
+    for route in self.routes:
+      prefix = os.path.commonprefix([self.decimalToBinaryString(packet["msg"]["network"]), self.decimalToBinaryString(route["network"])])
+      
+      print(prefix)
     return False
 
-  def forwardUpdate(self, srcif, destinationIP, msg):
-    newUpdate = {
-      "type": "update",
-      "src": srcif,
-      "dst": destinationIP,
-      "msg": msg
-    }
-    self.forward(destinationIP, newUpdate)
-
   def send_new_packet(self, socket, packet):
+    #Create new packet src
     packetCopySrc = ('.').join(socket.split('.', 3)[:3]) + '.1'
     packet[SRCE] = packetCopySrc
     packet[DEST] = socket
@@ -252,7 +244,6 @@ class Router:
     # Currently sends packet to all other connections
     newASPath = message["ASPath"]
     newASPath.append(self.asn)
-    
     sourceRelation = self.relations[srcif]
     if sourceRelation == "cust":
       # a) update received from a customer: send revoke to all other neighbors
@@ -284,6 +275,19 @@ class Router:
         sameMask = route["netmask"] == network["netmask"]
         if sameNeighbor and sameIP and sameMask:
           self.routes.pop(i) # can cause troubles with for loop
+
+      # TODO for last test
+      # for i in range(len(self.updates) - 1):
+      #   update = self.updates[i]
+      #   sameNeighbor = updates["peer"] == neighborToRevokeFrom 
+      #   sameIP = route["network"] == network["network"]
+      #   sameMask = route["netmask"] == network["netmask"]
+      #   if sameNeighbor and sameIP and sameMask:
+      #     self.updates.pop(i) # can cause troubles with for loop
+      
+    # rebuild forwarding table
+    # for update in self.updates:
+    #   self.update()
 
     # 3) potentially send copies of the announcement to neighboring routers
     revokeRelation = self.relations[neighborToRevokeFrom]
@@ -326,12 +330,13 @@ class Router:
     elif messageType == "revoke":
       return self.revoke(packet)
     elif messageType == "data":
-      socket = self.get_route(srcif, packet["dst"])
-      if socket:
+      peer = self.get_route(srcif, packet["dst"])
+      route = self.filter_relationships(srcif, peer)
+      if route:
+        socket = self.sockets[route]
         data = json.dumps(packet)
         socket.sendall(data.encode())
       else:
-        print("couldnt send: " + str(packet))
         data = {
           "src":  srcif,         
           "dst":  packet["src"],          
