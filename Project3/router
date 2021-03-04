@@ -241,7 +241,7 @@ class Router:
           if diff == 1 or diff == 2 or diff == -256 or diff == -768 or diff == -512:
             # remove current routes in table
             packetIndex = self.routes.index(tableRoute)
-            print("PACKET INDEX " + packetIndex)
+            print("PACKET INDEX " + str(packetIndex))
             self.routes.pop(packetIndex)
             #Do the actual coalescing
 
