@@ -226,7 +226,7 @@ class Router:
     return output
     
 
-  def coalesce(self, packet):
+  def coalesce(self, packet, tableRoute):
     """ coalesce any routes that are right next to each other """
     #Compare supplied packet to entries in forwarding table
     for route in self.routes:
@@ -240,7 +240,7 @@ class Router:
           print("diff = " + str(diff))
           if diff == 1 or diff == 2 or diff == -256 or diff == -768 or diff == -512:
             # remove current routes in table
-            packetIndex = self.routes.index(packet)
+            packetIndex = self.routes.index(tableRoute)
             print("PACKET INDEX " + packetIndex)
             self.routes.pop(packetIndex)
             #Do the actual coalescing
@@ -269,8 +269,7 @@ class Router:
     newASPath = message["ASPath"]
     newASPath.append(self.asn)
     
-    
-    self.routes.append({ 
+    tableRoute = { 
       "network": message["network"], 
       "netmask": message["netmask"], 
       "localpref": message["localpref"], 
@@ -278,7 +277,10 @@ class Router:
       "origin": message["origin"], 
       "selfOrigin": message["selfOrigin"],
       "peer": packet["src"]
-      })
+      }
+    
+    self.routes.append(tableRoute)
+    self.coalesce(packet, tableRoute)
 
     # 3) potentially send copies of the announcement to neighboring routers 
     # Currently sends packet to all other connections
