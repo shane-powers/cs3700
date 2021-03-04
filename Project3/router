@@ -238,7 +238,7 @@ class Router:
           packetNet = "".join(self.decimalToBinaryString(packet["msg"]["network"]).split("."))
           diff = int(routeNet, 2) - int(packetNet, 2) # 1 2 -1 -2
           print("diff = " + str(diff))
-          if diff == 1 or diff == 2 or diff == -256 or diff == -257:
+          if diff == 1 or diff == 2 or diff == -256 or diff == -512:
             #Do the actual coalescing
             routeNetmask = route["netmask"]
             route["netmask"] = self.decrementNetmask(routeNetmask, diff)
