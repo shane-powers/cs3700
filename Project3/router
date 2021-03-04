@@ -169,7 +169,7 @@ class Router:
     outroutes = []
     sourceRelation = self.relations[srcif]
     for route in routes:
-      destinationRelation = self.relations[route]
+      destinationRelation = self.relations[route["peer"]]
       if sourceRelation == "cust" or destinationRelation == "cust": # might need to refine logic
         outroutes.append(route)
     return outroutes
