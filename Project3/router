@@ -260,7 +260,7 @@ class Router:
     return False
 
   def send_new_packet(self, socket, packet):
-    packetCopySrc = socket
+    packetCopySrc = ('.').join(socket.split('.', 3)[:3]) + '.1'
     packet[SRCE] = packetCopySrc
     packet[DEST] = socket
     self.sockets[socket].sendall(json.dumps(packet).encode())
