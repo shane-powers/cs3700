@@ -265,25 +265,7 @@ class Router:
             # add coalesced route
             routeNetmask = packet["msg"]["netmask"]
             packet["msg"]["netmask"] = self.decrementNetmask(routeNetmask, diff)
-            self.routes.append({ 
-              "network": packet["msg"]["network"], 
-              "netmask": packet["msg"]["netmask"], 
-              "localpref": packet["msg"]["localpref"], 
-              "ASPath": packet["msg"]["ASPath"], 
-              "origin": packet["msg"]["origin"], 
-              "selfOrigin": packet["msg"]["selfOrigin"],
-              "peer": packet["src"]
-              })
             return self.coalesce(packet)
-    self.routes.append({ 
-              "network": packet["msg"]["network"], 
-              "netmask": packet["msg"]["netmask"], 
-              "localpref": packet["msg"]["localpref"], 
-              "ASPath": packet["msg"]["ASPath"], 
-              "origin": packet["msg"]["origin"], 
-              "selfOrigin": packet["msg"]["selfOrigin"],
-              "peer": packet["src"]
-              })
     return False
 
   def send_new_packet(self, route, packet):
@@ -303,6 +285,15 @@ class Router:
     # 2) add an entry to our forwarding table
     newASPath = message["ASPath"]
     newASPath.append(self.asn)
+    self.routes.append({ 
+              "network": packet["msg"]["network"], 
+              "netmask": packet["msg"]["netmask"], 
+              "localpref": packet["msg"]["localpref"], 
+              "ASPath": packet["msg"]["ASPath"], 
+              "origin": packet["msg"]["origin"], 
+              "selfOrigin": packet["msg"]["selfOrigin"],
+              "peer": packet["src"]
+              })
     self.coalesce(packet)
 
     # 3) potentially send copies of the announcement to neighboring routers 
