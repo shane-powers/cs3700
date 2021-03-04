@@ -243,7 +243,6 @@ class Router:
     return False
 
   def send_new_packet(self, route, packet):
-    print(self.decimalToBinaryString("192.168.0.9"))
     #Create new packet src
     packetCopySrc = ('.').join(route.split('.', 3)[:3]) + '.1' #Add a .1 to the end 
     packet["src"] = packetCopySrc
@@ -348,6 +347,7 @@ class Router:
       "type": "table",                   
       "msg": dumpMessage
     }
+    print("routing table:\n" + str(dumpMessage))
     self.forward(packet["src"], dumpPacket)
     return True
 
