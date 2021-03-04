@@ -259,6 +259,7 @@ class Router:
         self.forwardUpdate(neighborIP[:-1] + "1", neighborIP, messageToNeighbors)
 
     sourceRelation = self.relations[srcif]
+    print("source relation of " + str(srcif) + " is " + sourceRelation)
     if sourceRelation == "cust":
       # a) update received from a customer: send revoke to all other neighbors
       for key in self.sockets:
