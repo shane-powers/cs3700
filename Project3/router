@@ -240,7 +240,7 @@ class Router:
           print("4: ahhh: \n" + str(routeNet) + " vs \n" + str(packetNet))
           diff = int(routeNet, 2) - int(packetNet, 2)
           print(diff)
-          if abs(diff) == 1:
+          if diff == 1 or diff == -256:
             print("5: diff was 1: " + str(diff))
             #Do the actual coalescing
             routeNetmask = route["netmask"]
