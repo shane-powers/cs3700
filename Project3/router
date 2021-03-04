@@ -214,9 +214,9 @@ class Router:
     binaryString = "".join(self.decimalToBinaryString(netmask).split("."))
     newNetmask = binaryString[2:] 
     if diff < 0:
-      newNetmask = newNetmask.replace("10", "00")
-    elif diff > 0:
       newNetmask = newNetmask.replace("10", "11")
+    elif diff > 0:
+      newNetmask = newNetmask.replace("10", "00")
     output = ""
     output = output + str(int(newNetmask[:8],2)) + "."
     output = output + str(int(newNetmask[8:16],2)) + "."
@@ -236,16 +236,18 @@ class Router:
           #Check if packet and route are numerically adjecent
           routeNet = "".join(self.decimalToBinaryString(route["network"]).split(".")) # decimal string
           packetNet = "".join(self.decimalToBinaryString(packet["msg"]["network"]).split("."))
-
-
-
           diff = int(routeNet, 2) - int(packetNet, 2) # 1 2 -1 -2
           print("diff = " + str(diff))
           if diff == 1 or diff == 2 or diff == -256 or diff == -768 or diff == -512:
+            # remove current routes in table
+            packetIndex = self.routes.index(packet)
+            self.routes.pop(packetIndex)
             #Do the actual coalescing
+
+            # add coalesced route
             routeNetmask = route["netmask"]
             route["netmask"] = self.decrementNetmask(routeNetmask, diff)
-            return True
+            return self.coalesce(route)
     return False
 
   def send_new_packet(self, route, packet):
@@ -266,16 +268,16 @@ class Router:
     newASPath = message["ASPath"]
     newASPath.append(self.asn)
     
-    if not self.coalesce(packet):
-      self.routes.append({ 
-        "network": message["network"], 
-        "netmask": message["netmask"], 
-        "localpref": message["localpref"], 
-        "ASPath": message["ASPath"], 
-        "origin": message["origin"], 
-        "selfOrigin": message["selfOrigin"],
-        "peer": packet["src"]
-        })
+    
+    self.routes.append({ 
+      "network": message["network"], 
+      "netmask": message["netmask"], 
+      "localpref": message["localpref"], 
+      "ASPath": message["ASPath"], 
+      "origin": message["origin"], 
+      "selfOrigin": message["selfOrigin"],
+      "peer": packet["src"]
+      })
 
     # 3) potentially send copies of the announcement to neighboring routers 
     # Currently sends packet to all other connections
