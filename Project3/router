@@ -210,57 +210,37 @@ class Router:
     socket.sendall(data.encode())
     return False
 
-  #def compareNetmask(self, route, packet)
+  def decrementNetmask(self, netmask):
+    binaryString = "".join(self.decimalToBinaryString("255.255.0.0")).split(".")
+    newNetmask = str(bin(int(binaryString, 2) - 1)) 
+    newNetmask = newNetmask[2:] 
+    newNetmask.replace("10", "00")
+    output = ""
+    output = output + str(int(newNetmask[:8],2)) + "."
+    output = output + str(int(newNetmask[8:16],2)) + "."
+    output = output + str(int(newNetmask[16:24],2)) + "."
+    output = output + str(int(newNetmask[24:32],2))
+    return output
+    
 
-  def checkIfNeighbor(self, route, packet):
-    return
-
-  # def shiftBit(self, netmask):
-  #   netmaskArray = netmask.split(".")
-  #   for maskIndex in range(4):
-  #     if maskIndex[i] != "255":
-  #       return
-
-  # def coalesce(self, packet):
-  #   """ coalesce any routes that are right next to each other """
-  #   #Compare supplied packet to entries in forwarding table
-  #   for route in self.routes:
-  #     #Check if supplied packet and route have the same attributes
-  #     if(packet["src"] == route["peer"] and packet["msg"]["ASPath"] == socket["ASPath"] and packet['msg']["localpref"] == route["localpref"]):
-  #       if(packet["msg"]["origin"] == socket["origin"] and packet["msg"]["selfOrigin"] == socket["selfOrigin"]):
-  #         #Check if packet and route are numerically adjecent
-  #           routeNet = route["network"].split(".")
-  #           packetNet = packet["network"].split(".")
-  #           """
-  #           1) convert to binary (make sure each section gets 8 bits, so 0 => 00000000, 9 => 00001001)
-  #           2) concat sections to make one binary number
-  #           3) take difference of binary representation of the address
-  #           4) if it is one, they are neighbors
-  #           """
-  #           # 192.168.0.0
-  #           # 192.169.0.0
-  #           firstSectionDifference = abs(int(routeNet[0]) - int(packetNet[0]))
-  #           secondSectionDifference = abs(int(routeNet[1]) - int(packetNet[1]))
-  #           thirdSectionDifference = abs(int(routeNet[2]) - int(packetNet[2]))
-  #           fourthSectionDifference = abs(int(routeNet[3]) - int(packetNet[3]))
-  #           if 
-            
-
-  #           if abs(routeNet - packetNet) == 1:
-              
-  #           #Do the actual coalescing
-  #           routeNetmask = route["netmask"]
-  #           route["netmask"] = shiftBit(routeNetmask)
-  #           print(routeNet)
-              
-
-
-  #     #If not same attributes, apply netmask to both and compare
-  #     #elif self.compareNetmask(route, packet)
-
-  #     prefix = os.path.commonprefix([self.decimalToBinaryString(packet["msg"]["network"]), self.decimalToBinaryString(route["network"])])
-  #     print(prefix)
-  #   return False
+  def coalesce(self, packet):
+    """ coalesce any routes that are right next to each other """
+    #Compare supplied packet to entries in forwarding table
+    for route in self.routes:
+    #Check if supplied packet and route have the same attributes
+      if(packet["src"] == route["peer"] and packet["msg"]["ASPath"] == route["ASPath"] and packet['msg']["localpref"] == route["localpref"]):
+        if(packet["msg"]["origin"] == route["origin"] and packet["msg"]["selfOrigin"] == route["selfOrigin"]):
+          #Check if packet and route are numerically adjecent
+            routeNet = "".join(self.decimalToBinaryString(route["network"]).split(".")) # decimal string
+            packetNet = self.decimalToBinaryString(packet["network"]).split(".")
+            diff = int(routeNet, 2) - int(packetNet, 2)
+            if abs(diff) == 1:
+              #Do the actual coalescing
+              routeNetmask = route["netmask"]
+              route["netmask"] = self.decrementNetmask(routeNetmask)
+              print(routeNet)
+              return True
+    return False
 
   def send_new_packet(self, route, packet):
     print(self.decimalToBinaryString("192.168.0.9"))
@@ -278,15 +258,16 @@ class Router:
     self.updates.append(packet)
 
     # 2) add an entry to our forwarding table
-    self.routes.append({ 
-      "network": message["network"], 
-      "netmask": message["netmask"], 
-      "localpref": message["localpref"], 
-      "ASPath": message["ASPath"], 
-      "origin": message["origin"], 
-      "selfOrigin": message["selfOrigin"],
-      "peer": packet["src"]
-      })
+    if not self.coalesce(packet):
+      self.routes.append({ 
+        "network": message["network"], 
+        "netmask": message["netmask"], 
+        "localpref": message["localpref"], 
+        "ASPath": message["ASPath"], 
+        "origin": message["origin"], 
+        "selfOrigin": message["selfOrigin"],
+        "peer": packet["src"]
+        })
 
     # 3) potentially send copies of the announcement to neighboring routers 
     # Currently sends packet to all other connections
