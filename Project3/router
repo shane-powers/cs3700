@@ -211,7 +211,7 @@ class Router:
     return False
 
   def decrementNetmask(self, netmask):
-    binaryString = "".join(self.decimalToBinaryString("255.255.0.0")).split(".")
+    binaryString = "".join(self.decimalToBinaryString("255.255.0.0").split("."))
     newNetmask = str(bin(int(binaryString, 2) - 1)) 
     newNetmask = newNetmask[2:] 
     newNetmask.replace("10", "00")
@@ -239,9 +239,8 @@ class Router:
           packetNet = "".join(self.decimalToBinaryString(packet["msg"]["network"]).split("."))
           print("4: ahhh: \n" + str(routeNet) + " vs \n" + str(packetNet))
           diff = int(routeNet, 2) - int(packetNet, 2)
-          print(diff)
           if diff == 1 or diff == -256:
-            print("5: diff was 1: " + str(diff))
+            print("5: diff was: " + str(diff))
             #Do the actual coalescing
             routeNetmask = route["netmask"]
             route["netmask"] = self.decrementNetmask(routeNetmask)
