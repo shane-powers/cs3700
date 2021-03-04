@@ -263,6 +263,9 @@ class Router:
       # a) update received from a customer: send revoke to all other neighbors
       for key in self.sockets:
         if key != srcif:
+          print("source relation: " + sourceRelation)
+          print("socket relation: " + self.relations[key])
+          print("sent")
           self.send_new_packet(key, packet)
     elif sourceRelation == "prov" or sourceRelation == "peer":
       print("made it here")
@@ -270,9 +273,6 @@ class Router:
       for key in self.sockets:
         socketRelation = self.relations[key]
         if socketRelation == "cust" and key != srcif:
-          print("source relation: " + sourceRelation)
-          print("socket relation: " + socketRelation)
-          print("sent")
           self.send_new_packet(key, packet)
     return False
 
