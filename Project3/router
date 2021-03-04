@@ -267,41 +267,39 @@ class Router:
 
   def revoke(self, packet):
     """ handle revoke packets """
-    # TODO
+  
     # 1) save a copy of the revocation, in case we need it later
-
-    message = packet["msg"]
-
-    # 1) save a copy of the announcement in case we need it later
     self.revocation.append(packet)
 
-    packetCopy = packet
     # 2) remove the dead entry from the forwarding table
-    for index in range(len(self.routes)-1):
-      print(self.routes[index])
-      tempRoute = self.routes[index]
-      print(tempRoute["network"])
-      print(message)
-      for msgIndex in range(len(message)):
-        if tempRoute["network"] == message[msgIndex]["network"]:
-          self.routes.pop(index)
-      
+    neighborToRevokeFrom = packet["src"]
+    networksToRevoke = packet["msg"] 
+    for network in networksToRevoke:
+      print("revoking this network: " + str(network))
+      for i in range(len(self.routes) - 1):
+        route = self.routes[i]
+        print("comparing against this route: " + str(route))
+        sameNeighbor = route["peer"] == neighborToRevokeFrom 
+        sameIP = route["network"] == network["network"]
+        sameMask = route["netmask"] == network["netmask"]
+        if sameNeighbor and sameIP and sameMask:
+          self.routes.pop(i) # can cause troubles with for loop
+
     # 3) potentially send copies of the announcement to neighboring routers
     revokeRelation = self.relations[packet["src"]]
-    
     if revokeRelation == "cust":
       #customer
       # a) update received from a customer: send revoke to all other neighbors
       for key in self.sockets:
         if key != packet["src"]:
-          self.send_new_packet(key, packetCopy)
+          self.send_new_packet(key, packet)
     elif revokeRelation == "prov" or revokeRelation == "peer":
       #provider & peer
       # b) update received from a peer or provider: only send revoke to our customers
       for key in self.sockets:
         socketRelation = self.relations[socket]
         if socketRelation == "cust":
-          self.send_new_packet(key, packetCopy)
+          self.send_new_packet(key, packet)
     return True
 
   def dump(self, packet):
@@ -319,7 +317,6 @@ class Router:
       "type": "table",                   
       "msg": dumpMessage
     }
-    print("dumping: " + str(dumpMessage))
     self.forward(packet["src"], dumpPacket)
     return True
 
