@@ -260,7 +260,6 @@ class Router:
         if key != srcif:
           self.send_new_packet(key, packet)
     elif sourceRelation == "prov" or sourceRelation == "peer":
-      print("made it here")
       # b) update received from a peer or provider: only send revoke to our customers
       for key in self.sockets:
         socketRelation = self.relations[key]
@@ -332,6 +331,7 @@ class Router:
         data = json.dumps(packet)
         socket.sendall(data.encode())
       else:
+        print("couldnt send: " + str(packet))
         data = {
           "src":  srcif,         
           "dst":  packet["src"],          
