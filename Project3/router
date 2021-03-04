@@ -262,6 +262,9 @@ class Router:
     self.updates.append(packet)
 
     # 2) add an entry to our forwarding table
+    newASPath = message["ASPath"]
+    newASPath.append(self.asn)
+    
     if not self.coalesce(packet):
       self.routes.append({ 
         "network": message["network"], 
@@ -275,8 +278,6 @@ class Router:
 
     # 3) potentially send copies of the announcement to neighboring routers 
     # Currently sends packet to all other connections
-    newASPath = message["ASPath"]
-    newASPath.append(self.asn)
     sourceRelation = self.relations[srcif]
     if sourceRelation == "cust":
       # a) update received from a customer: send revoke to all other neighbors
