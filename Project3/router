@@ -267,7 +267,7 @@ class Router:
     elif sourceRelation == "prov" or sourceRelation == "peer":
       # b) update received from a peer or provider: only send revoke to our customers
       for key in self.sockets:
-        socketRelation = self.relations[socket]
+        socketRelation = self.relations[key]
         if socketRelation == "cust" and key != srcif:
           self.send_new_packet(key, packet)
     return False
@@ -306,7 +306,7 @@ class Router:
     elif revokeRelation == "prov" or revokeRelation == "peer":
       # b) update received from a peer or provider: only send revoke to our customers
       for key in self.sockets:
-        socketRelation = self.relations[socket]
+        socketRelation = self.relations[key]
         if socketRelation == "cust" and key != neighborToRevokeFrom:
           self.send_new_packet(key, packet)
     return True
