@@ -225,21 +225,26 @@ class Router:
 
   def coalesce(self, packet):
     """ coalesce any routes that are right next to each other """
+    print("entered coalesce with: " + str(packet))
     #Compare supplied packet to entries in forwarding table
     for route in self.routes:
     #Check if supplied packet and route have the same attributes
+      print("1 now comparing with: " + str(route))
       if(packet["src"] == route["peer"] and packet["msg"]["ASPath"] == route["ASPath"] and packet['msg']["localpref"] == route["localpref"]):
+        print("2 now comparing with: " + str(route))
         if(packet["msg"]["origin"] == route["origin"] and packet["msg"]["selfOrigin"] == route["selfOrigin"]):
           #Check if packet and route are numerically adjecent
-            routeNet = "".join(self.decimalToBinaryString(route["network"]).split(".")) # decimal string
-            packetNet = self.decimalToBinaryString(packet["network"]).split(".")
-            diff = int(routeNet, 2) - int(packetNet, 2)
-            if abs(diff) == 1:
-              #Do the actual coalescing
-              routeNetmask = route["netmask"]
-              route["netmask"] = self.decrementNetmask(routeNetmask)
-              print(routeNet)
-              return True
+          print("comparing networks: " + str(route))
+          routeNet = "".join(self.decimalToBinaryString(route["network"]).split(".")) # decimal string
+          packetNet = self.decimalToBinaryString(packet["network"]).split(".")
+          print("ahhh: " + str(routeNet) + " vs " + str(packetNet))
+          diff = int(routeNet, 2) - int(packetNet, 2)
+          if abs(diff) == 1:
+            #Do the actual coalescing
+            routeNetmask = route["netmask"]
+            route["netmask"] = self.decrementNetmask(routeNetmask)
+            print(routeNet)
+            return True
     return False
 
   def send_new_packet(self, route, packet):
