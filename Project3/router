@@ -331,11 +331,12 @@ class Router:
       return self.revoke(packet)
     elif messageType == "data":
       peer = self.get_route(srcif, packet["dst"])
-      route = self.filter_relationships(srcif, peer)
-      if route:
-        socket = self.sockets[route]
-        data = json.dumps(packet)
-        socket.sendall(data.encode())
+      if peer:
+        route = self.filter_relationships(srcif, peer)
+        if route:
+          socket = self.sockets[route]
+          data = json.dumps(packet)
+          socket.sendall(data.encode())
       else:
         data = {
           "src":  srcif,         
