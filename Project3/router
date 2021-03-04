@@ -236,7 +236,7 @@ class Router:
           #Check if packet and route are numerically adjecent
           print("3: comparing networks: \n" + str(route))
           routeNet = "".join(self.decimalToBinaryString(route["network"]).split(".")) # decimal string
-          packetNet = self.decimalToBinaryString(packet["network"]).split(".")
+          packetNet = "".join(self.decimalToBinaryString(packet["msg"]["network"]).split("."))
           print("4: ahhh: \n" + str(routeNet) + " vs \n" + str(packetNet))
           diff = int(routeNet, 2) - int(packetNet, 2)
           if abs(diff) == 1:
