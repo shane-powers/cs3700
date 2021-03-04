@@ -212,6 +212,7 @@ class Router:
 
   def compareNetmask(self, route, packet)
 
+<<<<<<< HEAD
   # def coalesce(self, packet):
   #   """ coalesce any routes that are right next to each other """
   #   #Compare supplied packet to entries in forwarding table
@@ -219,11 +220,20 @@ class Router:
   #     #Check if supplied packet and route have the same attributes
   #     if(packet["src"] == route["peer"] and packet["msg"]["ASPath"] == socket["ASPath"] packet['msg']["localpref"] == route["localpref"]):
   #       if(packet["msg"]["origin"] == socket["origin"] and packet["msg"]["selfOrigin"] == socket["selfOrigin"]):
+=======
+  def coalesce(self, packet):
+    """ coalesce any routes that are right next to each other """
+    #Compare supplied packet to entries in forwarding table
+    for route in self.routes:
+      #Check if supplied packet and route have the same attributes
+      if(packet["src"] == route["peer"] and packet["msg"]["ASPath"] == socket["ASPath"] packet['msg']["localpref"] == route["localpref"]):
+        if(packet["msg"]["origin"] == socket["origin"] and packet["msg"]["selfOrigin"] == socket["selfOrigin"]):
+>>>>>>> 26e72b37eec5fa0fdb1dfc73a05d4dbe0e3bd617
           
 
-  #     prefix = os.path.commonprefix([self.decimalToBinaryString(packet["msg"]["network"]), self.decimalToBinaryString(route["network"])])
-  #     print(prefix)
-  #   return False
+      prefix = os.path.commonprefix([self.decimalToBinaryString(packet["msg"]["network"]), self.decimalToBinaryString(route["network"])])
+      print(prefix)
+    return False
 
   def send_new_packet(self, route, packet):
     #Create new packet src
