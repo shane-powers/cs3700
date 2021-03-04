@@ -211,13 +211,15 @@ class Router:
     return False
 
   def decrementNetmask(self, netmask):
+    print("0:\n" + str(netmask))
     binaryString = "".join(self.decimalToBinaryString(netmask).split("."))
-
+    print("1: Binary string:\n" + str(binaryString))
     newNetmask = str(bin(int(binaryString, 2) - 1)) 
+    print("2:\n" + str(newNetmask))
     newNetmask = newNetmask[2:] 
-    print("before replace: \n" + str(newNetmask))
+    print("3: before replace: \n" + str(newNetmask))
     newNetmask.replace("10", "00")
-    print("after replace: \n" + str(newNetmask))
+    print("4: after replace: \n" + str(newNetmask))
     output = ""
     output = output + str(int(newNetmask[:8],2)) + "."
     output = output + str(int(newNetmask[8:16],2)) + "."
