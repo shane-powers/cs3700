@@ -166,13 +166,11 @@ class Router:
 
   def filter_relationships(self, srcif, peer):
     """ Don't allow Peer->Peer, Peer->Prov, or Prov->Peer forwards """
-    outroutes = []
     sourceRelation = self.relations[srcif]
-    for route in peer:
-      destinationRelation = self.relations[route]
-      if sourceRelation == "cust" or destinationRelation == "cust": # might need to refine logic
-        outroutes.append(route)
-    return outroutes
+    destinationRelation = self.relations[peer]
+    if sourceRelation == "cust" or destinationRelation == "cust": # might need to refine logic
+      return peer
+    return None
 
   def get_route(self, srcif, daddr):
     """ Select the best route for a given address """
@@ -211,7 +209,6 @@ class Router:
     """ coalesce any routes that are right next to each other """
     for route in self.routes:
       prefix = os.path.commonprefix([self.decimalToBinaryString(packet["msg"]["network"]), self.decimalToBinaryString(route["network"])])
-      
       print(prefix)
     return False
 
