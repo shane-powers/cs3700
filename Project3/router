@@ -164,15 +164,16 @@ class Router:
         outroutes.append(route)
     return outroutes
 
-  def filter_relationships(self, srcif, peer):
+  def filter_relationships(self, srcif, routes):
     """ Don't allow Peer->Peer, Peer->Prov, or Prov->Peer forwards """
+    outroutes = []
     sourceRelation = self.relations[srcif]
-    destinationRelation = self.relations[peer]
-    if sourceRelation == "cust" or destinationRelation == "cust": # might need to refine logic
-      print("sending: " + sourceRelation + ", to: " + destinationRelation)
-      return peer
-    print("not sending: " + sourceRelation + ", to: " + destinationRelation)
-    return None
+    for route in routes:
+      destinationRelation = self.relations[route["peer"]]
+      if sourceRelation == "cust" or destinationRelation == "cust": # might need to refine logic
+        print("sending: " + sourceRelation + ", to: " + destinationRelation)
+        outroutes.append(route)
+    return outroutes
 
   def get_route(self, srcif, daddr):
     """ Select the best route for a given address """
@@ -195,6 +196,9 @@ class Router:
       # 5. Lowest IP Address
       routes = self.get_lowest_ip(routes)
       #print("5: " + str(routes))
+      #
+      routes = self.filter_relationships(srcif, routes)
+      #
     peer = None
     if routes:
       peer = routes[0]["peer"]
@@ -211,6 +215,7 @@ class Router:
   #   """ coalesce any routes that are right next to each other """
   #   for route in self.routes:
   #     #Compare supplied packet to entries in forwarding table
+        #Check if supplied packet and route have the same attributes
   #     if(packet["src"] == route["peer"] and packet["msg"]["ASPath"] == socket["ASPath"] packet['msg']["localpref"] == route["localpref"]):
   #       if(packet["msg"]["origin"] == socket["origin"] and packet["msg"]["selfOrigin"] == socket["selfOrigin"]):
           
@@ -334,22 +339,11 @@ class Router:
     elif messageType == "revoke":
       return self.revoke(packet)
     elif messageType == "data":
-      peer = self.get_route(srcif, packet["dst"])
-      if peer:
-        route = self.filter_relationships(srcif, peer)
-        if route:
-          socket = self.sockets[route]
-          data = json.dumps(packet)
-          socket.sendall(data.encode())
-        else:
-          print("made it here")
-          data = {
-          "src":  srcif,         
-          "dst":  packet["src"],          
-          "type": "no route",                   
-          "msg":  {}
-        }
-        self.forward(srcif, data)
+      route = self.get_route(srcif, packet["dst"])
+      if route:
+        socket = self.sockets[route]
+        data = json.dumps(packet)
+        socket.sendall(data.encode())
       else:
         data = {
           "src":  srcif,         
@@ -357,6 +351,8 @@ class Router:
           "type": "no route",                   
           "msg":  {}
         }
+        print("packet given: " + str(packet))
+        print("sending this: " + str(data))
         self.forward(srcif, data)
       return 
     elif messageType == "no route":
