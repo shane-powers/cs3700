@@ -214,9 +214,9 @@ class Router:
     binaryString = "".join(self.decimalToBinaryString(netmask).split("."))
     newNetmask = binaryString[2:] 
     if diff < 0:
-      newNetmask = newNetmask.replace("10", "11")
-    elif diff > 0:
       newNetmask = newNetmask.replace("10", "00")
+    elif diff > 0:
+      newNetmask = newNetmask.replace("10", "11")
     output = ""
     output = output + str(int(newNetmask[:8],2)) + "."
     output = output + str(int(newNetmask[8:16],2)) + "."
