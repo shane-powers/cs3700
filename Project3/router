@@ -224,6 +224,12 @@ class Router:
     }
     self.forward(destinationIP, newUpdate)
 
+  def send_new_packet(self, socket, packet):
+    packetCopySrc = ('.').join(socket.split('.', 3)[:3]) + '.1'
+    packet[SRCE] = packetCopySrc
+    packet[DEST] = socket
+    self.sockets[socket].sendall(json.dumps(packet).encode())
+
   def update(self, srcif, packet):
     """ handle update packets """
     message = packet["msg"]
@@ -246,23 +252,12 @@ class Router:
     # Currently sends packet to all other connections
     newASPath = message["ASPath"]
     newASPath.append(self.asn)
-    messageToNeighbors = { 
-      "network": message["network"], 
-      "netmask": message["netmask"], 
-      "localpref": message["localpref"], 
-      "ASPath": newASPath, 
-      "origin": message["origin"], 
-      "selfOrigin": message["selfOrigin"]
-    }
     
     sourceRelation = self.relations[srcif]
     if sourceRelation == "cust":
       # a) update received from a customer: send revoke to all other neighbors
       for key in self.sockets:
         if key != srcif:
-          print("source relation: " + sourceRelation)
-          print("socket relation: " + self.relations[key])
-          print("sent")
           self.send_new_packet(key, packet)
     elif sourceRelation == "prov" or sourceRelation == "peer":
       print("made it here")
@@ -272,12 +267,6 @@ class Router:
         if socketRelation == "cust" and key != srcif:
           self.send_new_packet(key, packet)
     return False
-
-  def send_new_packet(self, socket, packet):
-    packetCopySrc = ('.').join(socket.split('.', 3)[:3]) + '.1'
-    packet[SRCE] = packetCopySrc
-    packet[DEST] = socket
-    self.sockets[socket].sendall(json.dumps(packet).encode())
 
   def revoke(self, packet):
     """ handle revoke packets """
