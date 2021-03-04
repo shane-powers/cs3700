@@ -269,8 +269,10 @@ class Router:
       # b) update received from a peer or provider: only send revoke to our customers
       for key in self.sockets:
         socketRelation = self.relations[key]
-        print("socket relation of " + str(key) + " is " + socketRelation)
         if socketRelation == "cust" and key != srcif:
+          print("source relation: " + sourceRelation)
+          print("socket relation: " + socketRelation)
+          print("sent")
           self.send_new_packet(key, packet)
     return False
 
