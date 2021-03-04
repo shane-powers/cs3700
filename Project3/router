@@ -214,9 +214,9 @@ class Router:
     binaryString = "".join(self.decimalToBinaryString(netmask).split("."))
     newNetmask = binaryString[2:] 
     if diff < 0:
-      newNetmask = newNetmask.replace("10", "11")
-    elif diff > 0:
       newNetmask = newNetmask.replace("10", "00")
+    elif diff > 0:
+      newNetmask = newNetmask.replace("10", "11")
     output = ""
     output = output + str(int(newNetmask[:8],2)) + "."
     output = output + str(int(newNetmask[8:16],2)) + "."
@@ -224,19 +224,6 @@ class Router:
     output = output + str(int(newNetmask[24:32],2))
     
     return output
-
-    """
-    shared mask of 255.255.255.0
-
-    192.168.0.0 => 
-    192.168.1.0 => 192.168.0.0 {255.255.254.0}
-    192.168.2.0 => 
-    192.168.3.0 => 192.168.2.0 {255.255.254} => 192.168.0.0 {255.255.253.0}
-        ^                    ^                                    ^
-
-
-
-    """
     
 
   def coalesce(self, packet):
@@ -249,18 +236,15 @@ class Router:
           #Check if packet and route are numerically adjecent
           routeNet = "".join(self.decimalToBinaryString(route["network"]).split(".")) # decimal string
           packetNet = "".join(self.decimalToBinaryString(packet["msg"]["network"]).split("."))
+
+
+
           diff = int(routeNet, 2) - int(packetNet, 2) # 1 2 -1 -2
           print("diff = " + str(diff))
           if diff == 1 or diff == 2 or diff == -256 or diff == -768 or diff == -512:
-            # remove current routes in table
-            # packetIndex = self.routes.index(tableRoute)
-            # print("PACKET INDEX " + str(packetIndex))
-            # self.routes.pop(packetIndex)
             #Do the actual coalescing
-
-            # add coalesced route
             routeNetmask = route["netmask"]
-            packet["msg"]["netmask"] = self.decrementNetmask(routeNetmask, diff)
+            route["netmask"] = self.decrementNetmask(routeNetmask, diff)
             return True
     return False
 
@@ -281,16 +265,18 @@ class Router:
     # 2) add an entry to our forwarding table
     newASPath = message["ASPath"]
     newASPath.append(self.asn)
+    
     if not self.coalesce(packet):
       self.routes.append({ 
-                "network": packet["msg"]["network"], 
-                "netmask": packet["msg"]["netmask"], 
-                "localpref": packet["msg"]["localpref"], 
-                "ASPath": packet["msg"]["ASPath"], 
-                "origin": packet["msg"]["origin"], 
-                "selfOrigin": packet["msg"]["selfOrigin"],
-                "peer": packet["src"]
-                })
+        "network": message["network"], 
+        "netmask": message["netmask"], 
+        "localpref": message["localpref"], 
+        "ASPath": message["ASPath"], 
+        "origin": message["origin"], 
+        "selfOrigin": message["selfOrigin"],
+        "peer": packet["src"]
+        })
+
     # 3) potentially send copies of the announcement to neighboring routers 
     # Currently sends packet to all other connections
     sourceRelation = self.relations[srcif]
