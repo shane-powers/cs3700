@@ -210,13 +210,16 @@ class Router:
     socket.sendall(data.encode())
     return False
 
-  def decrementNetmask(self, netmask):
+  def decrementNetmask(self, netmask, diff):
     print("0:\n" + str(netmask))
     binaryString = "".join(self.decimalToBinaryString(netmask).split("."))
     print("1: Binary string:\n" + str(binaryString))
     newNetmask = binaryString[2:] 
     print("2: before replace: \n" + str(newNetmask))
-    newNetmask = newNetmask.replace("10", "11")
+    if diff == -256:
+      newNetmask = newNetmask.replace("10", "11")
+    elif diff == 1:
+      newNetmask = newNetmask.replace("10", "00")
     print("3: after replace: \n" + str(newNetmask))
     output = ""
     output = output + str(int(newNetmask[:8],2)) + "."
@@ -247,7 +250,7 @@ class Router:
             print("5: diff was: " + str(diff))
             #Do the actual coalescing
             routeNetmask = route["netmask"]
-            route["netmask"] = self.decrementNetmask(routeNetmask)
+            route["netmask"] = self.decrementNetmask(routeNetmask, diff)
             print("6: netmask after: " + str(routeNetmask))
             return True
     return False
