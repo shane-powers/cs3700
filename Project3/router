@@ -254,10 +254,7 @@ class Router:
       "origin": message["origin"], 
       "selfOrigin": message["selfOrigin"]
     }
-    for neighborIP in self.sockets:
-      if not neighborIP == packet["src"]:
-        self.forwardUpdate(neighborIP[:-1] + "1", neighborIP, messageToNeighbors)
-
+    
     sourceRelation = self.relations[srcif]
     if sourceRelation == "cust":
       # a) update received from a customer: send revoke to all other neighbors
