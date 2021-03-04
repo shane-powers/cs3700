@@ -252,10 +252,6 @@ class Router:
           diff = int(routeNet, 2) - int(packetNet, 2) # 1 2 -1 -2
           print("diff = " + str(diff))
           if diff == 1 or diff == 2 or diff == -256 or diff == -768 or diff == -512:
-
-            routeIndex = self.routes.index(route)
-            self.routes.pop(routeIndex)
-
             # remove current routes in table
             # packetIndex = self.routes.index(tableRoute)
             # print("PACKET INDEX " + str(packetIndex))
@@ -263,9 +259,9 @@ class Router:
             #Do the actual coalescing
 
             # add coalesced route
-            routeNetmask = packet["msg"]["netmask"]
+            routeNetmask = route["netmask"]
             packet["msg"]["netmask"] = self.decrementNetmask(routeNetmask, diff)
-            return self.coalesce(packet)
+            return True
     return False
 
   def send_new_packet(self, route, packet):
@@ -285,17 +281,16 @@ class Router:
     # 2) add an entry to our forwarding table
     newASPath = message["ASPath"]
     newASPath.append(self.asn)
-    self.routes.append({ 
-              "network": packet["msg"]["network"], 
-              "netmask": packet["msg"]["netmask"], 
-              "localpref": packet["msg"]["localpref"], 
-              "ASPath": packet["msg"]["ASPath"], 
-              "origin": packet["msg"]["origin"], 
-              "selfOrigin": packet["msg"]["selfOrigin"],
-              "peer": packet["src"]
-              })
-    self.coalesce(packet)
-
+    if not self.coalesce(packet):
+      self.routes.append({ 
+                "network": packet["msg"]["network"], 
+                "netmask": packet["msg"]["netmask"], 
+                "localpref": packet["msg"]["localpref"], 
+                "ASPath": packet["msg"]["ASPath"], 
+                "origin": packet["msg"]["origin"], 
+                "selfOrigin": packet["msg"]["selfOrigin"],
+                "peer": packet["src"]
+                })
     # 3) potentially send copies of the announcement to neighboring routers 
     # Currently sends packet to all other connections
     sourceRelation = self.relations[srcif]
