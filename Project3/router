@@ -273,7 +273,7 @@ class Router:
               "ASPath": packet["msg"]["ASPath"], 
               "origin": packet["msg"]["origin"], 
               "selfOrigin": packet["msg"]["selfOrigin"],
-              "peer": packet["msg"]["src"]
+              "peer": packet["src"]
               })
     return False
 
