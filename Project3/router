@@ -207,17 +207,17 @@ class Router:
     socket.sendall(data.encode())
     return False
 
-  def coalesce(self, packet):
-    """ coalesce any routes that are right next to each other """
-    for route in self.routes:
-      #Compare supplied packet to entries in forwarding table
-      if(packet["src"] == route["peer"] and packet["msg"]["ASPath"] == socket["ASPath"] packet['msg']["localpref"] == route["localpref"]):
-        if(packet["msg"]["origin"] == socket["origin"] and packet["msg"]["selfOrigin"] == socket["selfOrigin"]):
+  # def coalesce(self, packet):
+  #   """ coalesce any routes that are right next to each other """
+  #   for route in self.routes:
+  #     #Compare supplied packet to entries in forwarding table
+  #     if(packet["src"] == route["peer"] and packet["msg"]["ASPath"] == socket["ASPath"] packet['msg']["localpref"] == route["localpref"]):
+  #       if(packet["msg"]["origin"] == socket["origin"] and packet["msg"]["selfOrigin"] == socket["selfOrigin"]):
           
 
-      prefix = os.path.commonprefix([self.decimalToBinaryString(packet["msg"]["network"]), self.decimalToBinaryString(route["network"])])
-      print(prefix)
-    return False
+  #     prefix = os.path.commonprefix([self.decimalToBinaryString(packet["msg"]["network"]), self.decimalToBinaryString(route["network"])])
+  #     print(prefix)
+  #   return False
 
   def send_new_packet(self, socket, packet):
     #Create new packet src
