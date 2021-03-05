@@ -268,9 +268,7 @@ class Router:
     newASPath = message["ASPath"]
     newASPath.append(self.asn)
     
-    if not self.coalesce(packet["msg"]):
-      self.routes.append({ 
-        "network": message["network"], 
+    self.coalesce("network": message["network"], 
         "netmask": message["netmask"], 
         "localpref": message["localpref"], 
         "ASPath": message["ASPath"], 
@@ -278,6 +276,7 @@ class Router:
         "selfOrigin": message["selfOrigin"],
         "peer": packet["src"]
         })
+      
 
     # 3) potentially send copies of the announcement to neighboring routers 
     # Currently sends packet to all other connections
