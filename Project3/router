@@ -253,6 +253,7 @@ class Router:
             
             self.routes.remove(route)
             self.coalesce(newRoute)
+            return True
     self.routes.append(packet)
     return True
 
