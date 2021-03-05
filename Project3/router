@@ -232,18 +232,21 @@ class Router:
     hasCoalesced = False
     for route in self.routes:
     #Check if supplied packet and route have the same attributes
-      if(packet["ASPath"] == route["ASPath"] and packet["localpref"] == route["localpref"]):
-        if(packet["origin"] == route["origin"] and packet["selfOrigin"] == route["selfOrigin"]):
+      if(packet["src"] == route["peer"] and packet["msg"]["ASPath"] == route["ASPath"] and packet['msg']["localpref"] == route["localpref"]):
+        if(packet["msg"]["origin"] == route["origin"] and packet["msg"]["selfOrigin"] == route["selfOrigin"]):
           #Check if packet and route are numerically adjecent
           routeNet = "".join(self.decimalToBinaryString(route["network"]).split(".")) # decimal string
-          packetNet = "".join(self.decimalToBinaryString(packet["network"]).split("."))
+          packetNet = "".join(self.decimalToBinaryString(packet["msg"]["network"]).split("."))
+
+
+
           diff = int(routeNet, 2) - int(packetNet, 2) # 1 2 -1 -2
           print("diff = " + str(diff))
           if diff == 1 or diff == 2 or diff == -256 or diff == -768 or diff == -512:
             #Do the actual coalescing
             routeNetmask = route["netmask"]
             route["netmask"] = self.decrementNetmask(routeNetmask, diff)
-            return True
+            hasCoalesced = True
           
     return hasCoalesced
 
@@ -265,7 +268,7 @@ class Router:
     newASPath = message["ASPath"]
     newASPath.append(self.asn)
     
-    if not self.coalesce(packet["msg"]):
+    if not self.coalesce(packet):
       self.routes.append({ 
         "network": message["network"], 
         "netmask": message["netmask"], 
