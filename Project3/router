@@ -237,7 +237,7 @@ class Router:
           routeNet = "".join(self.decimalToBinaryString(route["network"]).split(".")) # decimal string
           packetNet = "".join(self.decimalToBinaryString(packet["network"]).split("."))
           diff = int(routeNet, 2) - int(packetNet, 2) # 1 2 -1 -2
-          if diff == 1 or diff == -256 or (route["aggregationCount"] > 0 and packet["aggregationCount"] > 0) :
+          if diff == 1 or diff == -256 or ((route["aggregationCount"] > 0 and packet["aggregationCount"] > 0) and (diff == 1 or diff == -256)) :
             #Do the actual coalescing
             newRoute = {"network": route["network"], 
                 "netmask": self.decrementNetmask(route["netmask"], diff), 
