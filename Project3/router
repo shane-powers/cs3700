@@ -230,24 +230,36 @@ class Router:
     """ coalesce any routes that are right next to each other """
     #Compare supplied packet to entries in forwarding table
     currentPacket = packet
-    for route in self.routes:
-    #Check if supplied packet and route have the same attributes
-      if(currentPacket["ASPath"] == route["ASPath"] and currentPacket["localpref"] == route["localpref"]):
-        if(currentPacket["origin"] == route["origin"] and currentPacket["selfOrigin"] == route["selfOrigin"]):
-          #Check if packet and route are numerically adjecent
-          routeNet = "".join(self.decimalToBinaryString(route["network"]).split(".")) # decimal string
-          packetNet = "".join(self.decimalToBinaryString(currentPacket["network"]).split("."))
+    counter = 0
+    while True:
+      hasCoalesced = False
+      for route in self.routes:
+      #Check if supplied packet and route have the same attributes
+        if(currentPacket["ASPath"] == route["ASPath"] and currentPacket["localpref"] == route["localpref"]):
+          if(currentPacket["origin"] == route["origin"] and currentPacket["selfOrigin"] == route["selfOrigin"]):
+            #Check if packet and route are numerically adjecent
+            routeNet = "".join(self.decimalToBinaryString(route["network"]).split(".")) # decimal string
+            packetNet = "".join(self.decimalToBinaryString(currentPacket["network"]).split("."))
 
 
 
-          diff = int(routeNet, 2) - int(packetNet, 2) # 1 2 -1 -2
-          print("diff = " + str(diff))
-          if diff == 1 or diff == 2 or diff == -256 or diff == -768 or diff == -512:
-            #Do the actual coalescing
-            routeNetmask = route["netmask"]
-            route["netmask"] = self.decrementNetmask(routeNetmask, diff)
-            return True
-    return False
+            diff = int(routeNet, 2) - int(packetNet, 2) # 1 2 -1 -2
+            print("diff = " + str(diff))
+            if diff == 1 or diff == 2 or diff == -256 or diff == -768 or diff == -512:
+              #Do the actual coalescing
+              routeNetmask = route["netmask"]
+              route["netmask"] = self.decrementNetmask(routeNetmask, diff)
+              hasCoalesced = True
+              coalescedRoute = route
+              counter = counter+1
+      if hasCoalesced:
+        currentPacket = coalescedRoute
+      else:
+        if counter > 0:
+          return True
+        else:
+          return False
+      return False
 
   def send_new_packet(self, route, packet):
     #Create new packet src
