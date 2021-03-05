@@ -261,8 +261,8 @@ class Router:
             routeNetmask = route["netmask"]
             route["netmask"] = self.decrementNetmask(routeNetmask, diff)
             return True
-        elif self.sameAfterNetmask(route, packet['msg']):
-          return True
+          elif self.sameAfterNetmask(route, packet['msg']):
+            return True
     return False
 
   def send_new_packet(self, route, packet):
