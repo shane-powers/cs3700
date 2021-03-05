@@ -231,11 +231,11 @@ class Router:
     #Compare supplied packet to entries in forwarding table
     for route in self.routes:
     #Check if supplied packet and route have the same attributes
-      if(currentPacket["ASPath"] == route["ASPath"] and currentPacket["localpref"] == route["localpref"]):
-        if(currentPacket["origin"] == route["origin"] and currentPacket["selfOrigin"] == route["selfOrigin"]):
+      if(packet["ASPath"] == route["ASPath"] and packet["localpref"] == route["localpref"]):
+        if(packet["origin"] == route["origin"] and packet["selfOrigin"] == route["selfOrigin"]):
           #Check if packet and route are numerically adjecent
           routeNet = "".join(self.decimalToBinaryString(route["network"]).split(".")) # decimal string
-          packetNet = "".join(self.decimalToBinaryString(currentPacket["network"]).split("."))
+          packetNet = "".join(self.decimalToBinaryString(packet["network"]).split("."))
 
 
 
