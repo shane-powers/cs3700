@@ -268,7 +268,7 @@ class Router:
     newASPath = message["ASPath"]
     newASPath.append(self.asn)
     
-    self.coalesce("network": message["network"], 
+    self.coalesce({"network": message["network"], 
         "netmask": message["netmask"], 
         "localpref": message["localpref"], 
         "ASPath": message["ASPath"], 
