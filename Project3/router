@@ -236,12 +236,8 @@ class Router:
           #Check if packet and route are numerically adjecent
           routeNet = "".join(self.decimalToBinaryString(route["network"]).split(".")) # decimal string
           packetNet = "".join(self.decimalToBinaryString(packet["network"]).split("."))
-
-
-
           diff = int(routeNet, 2) - int(packetNet, 2) # 1 2 -1 -2
-          print("diff = " + str(diff))
-          if diff == 1 or diff == -256:
+          if diff == 1 or diff == -256 or (route["aggregationCount"] > 0 and (diff == 2 or diff == -512)) :
             #Do the actual coalescing
             newRoute = {"network": route["network"], 
                 "netmask": self.decrementNetmask(route["netmask"], diff), 
@@ -249,8 +245,8 @@ class Router:
                 "ASPath": route["ASPath"], 
                 "origin": route["origin"], 
                 "selfOrigin": route["selfOrigin"],
-                "peer": route["peer"]}
-            
+                "peer": route["peer"],
+                "aggregationCount": route["aggregationCount"] + 1}
             self.routes.remove(route)
             self.coalesce(newRoute)
             return True
@@ -282,7 +278,8 @@ class Router:
         "ASPath": message["ASPath"], 
         "origin": message["origin"], 
         "selfOrigin": message["selfOrigin"],
-        "peer": packet["src"]
+        "peer": packet["src"],
+        "aggregationCount": 0
         })
       
 
