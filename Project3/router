@@ -239,7 +239,7 @@ class Router:
 
 
 
-          diff = int(packetNet, 2) - int(routeNet, 2)# 1 2 -1 -2
+          diff = int(routeNet, 2) - int(packetNet, 2) # 1 2 -1 -2
           print("diff = " + str(diff))
           if diff == 1 or diff == 2 or diff == -256 or diff == -768 or diff == -512:
             #Do the actual coalescing
