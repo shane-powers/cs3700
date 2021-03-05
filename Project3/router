@@ -239,17 +239,17 @@ class Router:
 
 
 
-          diff = int(routeNet, 2) - int(packetNet, 2) # 1 2 -1 -2
+          diff = int(packetNet, 2) - int(routeNet, 2)# 1 2 -1 -2
           print("diff = " + str(diff))
           if diff == 1 or diff == 2 or diff == -256 or diff == -768 or diff == -512:
             #Do the actual coalescing
-            newRoute = {"network": packet["network"], 
-                "netmask": self.decrementNetmask(packet["netmask"], diff), 
-                "localpref": packet["localpref"], 
-                "ASPath": packet["ASPath"], 
-                "origin": packet["origin"], 
-                "selfOrigin": packet["selfOrigin"],
-                "peer": packet["peer"]}
+            newRoute = {"network": route["network"], 
+                "netmask": self.decrementNetmask(route["netmask"], diff), 
+                "localpref": route["localpref"], 
+                "ASPath": route["ASPath"], 
+                "origin": route["origin"], 
+                "selfOrigin": route["selfOrigin"],
+                "peer": route["peer"]}
             
             self.routes.remove(route)
             self.coalesce(newRoute)
