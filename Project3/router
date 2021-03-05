@@ -229,13 +229,14 @@ class Router:
   def coalesce(self, packet):
     """ coalesce any routes that are right next to each other """
     #Compare supplied packet to entries in forwarding table
+    currentPacket = packet
     for route in self.routes:
     #Check if supplied packet and route have the same attributes
-      if(packet["src"] == route["peer"] and packet["msg"]["ASPath"] == route["ASPath"] and packet['msg']["localpref"] == route["localpref"]):
-        if(packet["msg"]["origin"] == route["origin"] and packet["msg"]["selfOrigin"] == route["selfOrigin"]):
+      if(currentPacket["ASPath"] == route["ASPath"] and currentPacket["localpref"] == route["localpref"]):
+        if(currentPacket["origin"] == route["origin"] and currentPacket["selfOrigin"] == route["selfOrigin"]):
           #Check if packet and route are numerically adjecent
           routeNet = "".join(self.decimalToBinaryString(route["network"]).split(".")) # decimal string
-          packetNet = "".join(self.decimalToBinaryString(packet["msg"]["network"]).split("."))
+          packetNet = "".join(self.decimalToBinaryString(currentPacket["msg"]["network"]).split("."))
 
 
 
@@ -266,7 +267,7 @@ class Router:
     newASPath = message["ASPath"]
     newASPath.append(self.asn)
     
-    if not self.coalesce(packet):
+    if not self.coalesce(packet["msg"]):
       self.routes.append({ 
         "network": message["network"], 
         "netmask": message["netmask"], 
