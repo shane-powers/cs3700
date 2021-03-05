@@ -244,6 +244,7 @@ class Router:
   def coalesce(self, packet):
     """ coalesce any routes that are right next to each other """
     #Compare supplied packet to entries in forwarding table
+    hasCoalesced = False
     for route in self.routes:
     #Check if supplied packet and route have the same attributes
       if(packet["src"] == route["peer"] and packet["msg"]["ASPath"] == route["ASPath"] and packet['msg']["localpref"] == route["localpref"]):
@@ -260,10 +261,10 @@ class Router:
             #Do the actual coalescing
             routeNetmask = route["netmask"]
             route["netmask"] = self.decrementNetmask(routeNetmask, diff)
-            return True
+            hasCoalesced = True
           elif self.sameAfterNetmask(route, packet['msg']):
-            return True
-    return False
+            hasCoalesced =  True
+    return hasCoalesced
 
   def send_new_packet(self, route, packet):
     #Create new packet src
