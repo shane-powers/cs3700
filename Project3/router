@@ -259,7 +259,7 @@ class Router:
           return True
         else:
           return False
-      return False
+    return False
 
   def send_new_packet(self, route, packet):
     #Create new packet src
