@@ -243,7 +243,7 @@ class Router:
             #Do the actual coalescing
             routeNetmask = route["netmask"]
             route["netmask"] = self.decrementNetmask(routeNetmask, diff)
-            hasCoalesced = True
+            return True
           
     return hasCoalesced
 
@@ -265,7 +265,7 @@ class Router:
     newASPath = message["ASPath"]
     newASPath.append(self.asn)
     
-    if not self.coalesce(message):
+    if not self.coalesce(packet["msg"]):
       self.routes.append({ 
         "network": message["network"], 
         "netmask": message["netmask"], 
