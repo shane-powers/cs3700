@@ -226,6 +226,21 @@ class Router:
     return output
     
 
+  def sameAfterNetmask(self, entry, packet):
+  netmask = entry[NMSK].split(".")
+  s1 = entry[NTWK].split(".")
+  s2 = packet[NTWK].split(".")
+  #   same = True
+  for i in range(4):
+    afterNetmask = int(s2[i]) & int(netmask[i])
+    if s1[i] == s2[i]:
+      continue
+    elif int(s1[i]) == afterNetmask:
+      continue
+    else:
+      return False
+  return True
+
   def coalesce(self, packet):
     """ coalesce any routes that are right next to each other """
     #Compare supplied packet to entries in forwarding table
@@ -246,6 +261,8 @@ class Router:
             routeNetmask = route["netmask"]
             route["netmask"] = self.decrementNetmask(routeNetmask, diff)
             return True
+        elif self.sameAfterNetmask(route, packet['msg']):
+          return True
     return False
 
   def send_new_packet(self, route, packet):
