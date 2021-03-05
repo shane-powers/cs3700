@@ -255,6 +255,7 @@ class Router:
             self.coalesce(newRoute)
             return True
     self.routes.append(packet)
+    print("Packet appended: " + str(packet))
     return True
 
   def send_new_packet(self, route, packet):
