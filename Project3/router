@@ -236,7 +236,7 @@ class Router:
         if(currentPacket["origin"] == route["origin"] and currentPacket["selfOrigin"] == route["selfOrigin"]):
           #Check if packet and route are numerically adjecent
           routeNet = "".join(self.decimalToBinaryString(route["network"]).split(".")) # decimal string
-          packetNet = "".join(self.decimalToBinaryString(currentPacket["msg"]["network"]).split("."))
+          packetNet = "".join(self.decimalToBinaryString(currentPacket["network"]).split("."))
 
 
 
