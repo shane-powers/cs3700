@@ -226,35 +226,17 @@ class Router:
     return output
     
 
-  def sameAfterNetmask(self, entry, packet):
-    netmask = entry[NMSK].split(".")
-    s1 = entry[NTWK].split(".")
-    s2 = packet[NTWK].split(".")
-    #   same = True
-    for i in range(4):
-      afterNetmask = int(s2[i]) & int(netmask[i])
-      if s1[i] == s2[i]:
-        continue
-      elif int(s1[i]) == afterNetmask:
-        continue
-      else:
-        return False
-    return True
-
   def coalesce(self, packet):
     """ coalesce any routes that are right next to each other """
     #Compare supplied packet to entries in forwarding table
     hasCoalesced = False
     for route in self.routes:
     #Check if supplied packet and route have the same attributes
-      if(packet["src"] == route["peer"] and packet["msg"]["ASPath"] == route["ASPath"] and packet['msg']["localpref"] == route["localpref"]):
-        if(packet["msg"]["origin"] == route["origin"] and packet["msg"]["selfOrigin"] == route["selfOrigin"]):
+      if(packet["ASPath"] == route["ASPath"] and packet["localpref"] == route["localpref"]):
+        if(packet["origin"] == route["origin"] and packet["selfOrigin"] == route["selfOrigin"]):
           #Check if packet and route are numerically adjecent
           routeNet = "".join(self.decimalToBinaryString(route["network"]).split(".")) # decimal string
           packetNet = "".join(self.decimalToBinaryString(packet["msg"]["network"]).split("."))
-
-
-
           diff = int(routeNet, 2) - int(packetNet, 2) # 1 2 -1 -2
           print("diff = " + str(diff))
           if diff == 1 or diff == 2 or diff == -256 or diff == -768 or diff == -512:
@@ -262,8 +244,7 @@ class Router:
             routeNetmask = route["netmask"]
             route["netmask"] = self.decrementNetmask(routeNetmask, diff)
             hasCoalesced = True
-          elif self.sameAfterNetmask(route, packet['msg']):
-            hasCoalesced =  True
+          
     return hasCoalesced
 
   def send_new_packet(self, route, packet):
@@ -284,7 +265,7 @@ class Router:
     newASPath = message["ASPath"]
     newASPath.append(self.asn)
     
-    if not self.coalesce(packet):
+    if not self.coalesce(message):
       self.routes.append({ 
         "network": message["network"], 
         "netmask": message["netmask"], 
