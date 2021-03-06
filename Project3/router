@@ -323,9 +323,10 @@ class Router:
         if sameNeighbor and sameIP and sameMask:
           self.routes.pop(i) # can cause troubles with for loop
 
-      # # remove that update
+      # # # remove that update
       # for i in range(len(self.updates) - 1):
       #   update = self.updates[i]
+      #   message = update["msg"]
       #   sameNeighbor = update["src"] == neighborToRevokeFrom 
       #   sameIP = route["network"] == network["network"]
       #   sameMask = route["netmask"] == network["netmask"]
@@ -336,15 +337,17 @@ class Router:
     self.routes = []
     for update in self.updates:
       message = update["msg"]
+      newASPath = message["ASPath"]
+      newASPath.append(self.asn)
       self.coalesce({"network": message["network"], 
-        "netmask": message["netmask"], 
-        "localpref": message["localpref"], 
-        "ASPath": message["ASPath"], 
-        "origin": message["origin"], 
-        "selfOrigin": message["selfOrigin"],
-        "peer": update["src"],
-        "aggregationCount": 0
-        })
+          "netmask": message["netmask"], 
+          "localpref": message["localpref"], 
+          "ASPath": message["ASPath"], 
+          "origin": message["origin"], 
+          "selfOrigin": message["selfOrigin"],
+          "peer": packet["src"],
+          "aggregationCount": 0
+          })
 
     # 3) potentially send copies of the announcement to neighboring routers
     revokeRelation = self.relations[neighborToRevokeFrom]
