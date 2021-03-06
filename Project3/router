@@ -60,30 +60,26 @@ class Router:
     binary = ".".join([bin(int(x)+256)[3:] for x in ip.split('.')])
     return str(binary)
 
-  def longestCommonPrefix(self, strs):
-      if len(strs) == 0:
-         return ""
-      current = strs[0]
-      for i in range(1,len(strs)):
+  def longestCommonPrefix(self, stringArray):
+      """ returns the longest common prefix between the strings in the string array """
+      if len(stringArray) == 0: return ""
+      longestPrefix = stringArray[0]
+      for i in range(1,len(stringArray)):
          temp = ""
-         if len(current) == 0:
-            break
-         for j in range(len(strs[i])):
-            if j<len(current) and current[j] == strs[i][j]:
-               temp+=current[j]
-            else:
-               break
-         current = temp
-      return current
+         if len(longestPrefix) == 0: break
+         for j in range(len(stringArray[i])):
+            if j<len(longestPrefix) and longestPrefix[j] == stringArray[i][j]:
+               temp+=longestPrefix[j]
+            else: break
+         longestPrefix = temp
+      return longestPrefix
 
   def findLongestPrefix(self, daddr):
     """ returns network(s) with the longest prefix between the daddr and all values in our routing table """
     potentialRoutes = []
     longestPrefix = 0
     for route in self.routes:
-      #print("comparing: " + str(daddr) + " against: " + str(addr))
       prefix = self.longestCommonPrefix([self.decimalToBinaryString(daddr), self.decimalToBinaryString(route["network"])])
-      #print("common prefix: " + str(prefix))
       if len(prefix) > longestPrefix:
         longestPrefix = len(prefix)
         potentialRoutes = [route]
@@ -92,7 +88,7 @@ class Router:
     return potentialRoutes
 
   def lookup_routes(self, daddr):
-    """ Lookup all valid routes for an address """
+    """ Lookup all valid routes (longest prefix) for an address """
     outroutes = self.findLongestPrefix(daddr)
     return outroutes
 
@@ -235,7 +231,7 @@ class Router:
     return output
 
   def coalesce(self, packet):
-    """ coalesce any routes that are right next to each other """
+    """ coalesce any routes that are right next to each other, recursively """
     #Compare supplied packet to entries in forwarding table
     for route in self.routes:
     #Check if supplied packet and route have the same attributes
@@ -262,7 +258,7 @@ class Router:
     return True
 
   def send_new_packet(self, route, packet):
-    #Create new packet src
+    """ send a newly created packet """
     packetCopySrc = ('.').join(route.split('.', 3)[:3]) + '.1' #Add a .1 to the end 
     packet["src"] = packetCopySrc
     packet["dst"] = route
@@ -271,8 +267,7 @@ class Router:
   def update(self, srcif, packet):
     """ handle update packets """
     message = packet["msg"]
-
-    goodVariableName = {"network": message["network"], 
+    currentUpdate = {"network": message["network"], 
         "netmask": message["netmask"], 
         "localpref": message["localpref"], 
         "ASPath": message["ASPath"], 
@@ -282,24 +277,20 @@ class Router:
         "aggregationCount": 0
         }
     # 1) save a copy of the announcement in case we need it later
-    self.updates.append(goodVariableName)
-
-    # 2) add an entry to our forwarding table
+    self.updates.append(currentUpdate)
+    # 2) add an entry to our forwarding table through coalesce
     newASPath = message["ASPath"]
     newASPath.append(self.asn)
-    
     self.coalesce(goodVariableName)
-
     # 3) potentially send copies of the announcement to neighboring routers 
-    # Currently sends packet to all other connections
     sourceRelation = self.relations[srcif]
     if sourceRelation == "cust":
-      # a) update received from a customer: send revoke to all other neighbors
+      # a) update received from a customer: send update to all other neighbors
       for key in self.sockets:
         if key != srcif:
           self.send_new_packet(key, packet)
     elif sourceRelation == "prov" or sourceRelation == "peer":
-      # b) update received from a peer or provider: only send revoke to our customers
+      # b) update received from a peer or provider: only send update to our customers
       for key in self.sockets:
         socketRelation = self.relations[key]
         if socketRelation == "cust" and key != srcif:
@@ -308,22 +299,12 @@ class Router:
 
   def revoke(self, packet):
     """ handle revoke packets """
-  
     # 1) save a copy of the revocation, in case we need it later
     self.revocation.append(packet)
-
-    # 2) remove the dead entry from the forwarding table
+    # 2) remove the dead entry from list of stored updates
     neighborToRevokeFrom = packet["src"]
     networksToRevoke = packet["msg"] 
     for network in networksToRevoke:
-      for i in range(len(self.routes) - 1):
-        route = self.routes[i]
-        sameNeighbor = route["peer"] == neighborToRevokeFrom 
-        sameIP = route["network"] == network["network"]
-        sameMask = route["netmask"] == network["netmask"]
-        if sameNeighbor and sameIP and sameMask:
-          self.routes.pop(i) # can cause troubles with for loop
-
         for x in range(len(self.updates) - 1):
           update = self.updates[x]
           sameNeighbor = update["peer"] == neighborToRevokeFrom 
@@ -331,12 +312,10 @@ class Router:
           sameMask = update["netmask"] == network["netmask"]
           if sameNeighbor and sameIP and sameMask:
             self.updates.pop(x)
-
-    # rebuild
+    # rebuild forwarding table from modified stored updates
     self.routes = []
     for update in self.updates:
       self.coalesce(update)
-
     # 3) potentially send copies of the announcement to neighboring routers
     revokeRelation = self.relations[neighborToRevokeFrom]
     if revokeRelation == "cust":
@@ -401,12 +380,10 @@ class Router:
       return
     else:
       return
-    
     return False
 
   def send_error(self, conn, msg):
     """ Send a no_route error message """
-    # TODO
     return
 
   def run(self):
