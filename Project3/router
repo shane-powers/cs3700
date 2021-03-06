@@ -233,7 +233,6 @@ class Router:
     output = output + str(int(newNetmask[16:24],2)) + "."
     output = output + str(int(newNetmask[24:32],2))
     return output
-    
 
   def coalesce(self, packet):
     """ coalesce any routes that are right next to each other """
@@ -289,7 +288,6 @@ class Router:
         "peer": packet["src"],
         "aggregationCount": 0
         })
-      
 
     # 3) potentially send copies of the announcement to neighboring routers 
     # Currently sends packet to all other connections
@@ -326,17 +324,27 @@ class Router:
           self.routes.pop(i) # can cause troubles with for loop
 
       # TODO for last test
-      # for i in range(len(self.updates) - 1):
-      #   update = self.updates[i]
-      #   sameNeighbor = updates["peer"] == neighborToRevokeFrom 
-      #   sameIP = route["network"] == network["network"]
-      #   sameMask = route["netmask"] == network["netmask"]
-      #   if sameNeighbor and sameIP and sameMask:
-      #     self.updates.pop(i) # can cause troubles with for loop
+      for i in range(len(self.updates) - 1):
+        update = self.updates[i]
+        sameNeighbor = update["peer"] == neighborToRevokeFrom 
+        sameIP = route["network"] == network["network"]
+        sameMask = route["netmask"] == network["netmask"]
+        if sameNeighbor and sameIP and sameMask:
+          self.updates.pop(i) # can cause troubles with for loop
       
     # rebuild forwarding table
-    # for update in self.updates:
-    #   self.update()
+    self.routes = []
+    for update in self.updates:
+      message = update["msg"]
+      self.coalesce({"network": message["network"], 
+        "netmask": message["netmask"], 
+        "localpref": message["localpref"], 
+        "ASPath": message["ASPath"], 
+        "origin": message["origin"], 
+        "selfOrigin": message["selfOrigin"],
+        "peer": update["src"],
+        "aggregationCount": 0
+        })
 
     # 3) potentially send copies of the announcement to neighboring routers
     revokeRelation = self.relations[neighborToRevokeFrom]
@@ -368,7 +376,6 @@ class Router:
       "type": "table",                   
       "msg": dumpMessage
     }
-    print("routing table:\n" + str(dumpMessage))
     self.forward(packet["src"], dumpPacket)
     return True
 
