@@ -60,13 +60,29 @@ class Router:
     binary = ".".join([bin(int(x)+256)[3:] for x in ip.split('.')])
     return str(binary)
 
+  def longestCommonPrefix(self, strs):
+      if len(strs) == 0:
+         return ""
+      current = strs[0]
+      for i in range(1,len(strs)):
+         temp = ""
+         if len(current) == 0:
+            break
+         for j in range(len(strs[i])):
+            if j<len(current) and current[j] == strs[i][j]:
+               temp+=current[j]
+            else:
+               break
+         current = temp
+      return current
+
   def findLongestPrefix(self, daddr):
     """ returns network(s) with the longest prefix between the daddr and all values in our routing table """
     potentialRoutes = []
     longestPrefix = 0
     for route in self.routes:
       #print("comparing: " + str(daddr) + " against: " + str(addr))
-      prefix = os.path.commonprefix([self.decimalToBinaryString(daddr), self.decimalToBinaryString(route["network"])])
+      prefix = self.longestCommonPrefix([self.decimalToBinaryString(daddr), self.decimalToBinaryString(route["network"])])
       #print("common prefix: " + str(prefix))
       if len(prefix) > longestPrefix:
         longestPrefix = len(prefix)
@@ -177,27 +193,20 @@ class Router:
   def get_route(self, srcif, daddr):
     """ Select the best route for a given address """
     routes = self.lookup_routes(daddr)
-    #print("0: " + str(routes))
     # Rules go here
     if routes:
       # 1. Highest Preference
       routes = self.get_highest_preference(routes)
-      #print("1: " + str(routes))
       # 2. Self Origin
       routes = self.get_self_origin(routes)
-      #print("2: " + str(routes))
       # 3. Shortest ASPath
       routes = self.get_shortest_as_path(routes)
-      #print("3: " + str(routes))
       # 4. EGP > IGP > UNK
       routes = self.get_origin_routes(routes)
-      #print("4: " + str(routes))
       # 5. Lowest IP Address
       routes = self.get_lowest_ip(routes)
-      #print("5: " + str(routes))
-      #
+      # 6. Filter Relationships
       routes = self.filter_relationships(srcif, routes)
-      #
     peer = None
     if routes:
       peer = routes[0]["peer"]
@@ -211,6 +220,7 @@ class Router:
     return False
 
   def decrementNetmask(self, netmask, diff):
+    """ shift the netmask by one """
     binaryString = "".join(self.decimalToBinaryString(netmask).split("."))
     newNetmask = binaryString[2:] 
     if diff < 0:
@@ -222,7 +232,6 @@ class Router:
     output = output + str(int(newNetmask[8:16],2)) + "."
     output = output + str(int(newNetmask[16:24],2)) + "."
     output = output + str(int(newNetmask[24:32],2))
-    
     return output
     
 
@@ -237,7 +246,7 @@ class Router:
           routeNet = "".join(self.decimalToBinaryString(route["network"]).split(".")) # decimal string
           packetNet = "".join(self.decimalToBinaryString(packet["network"]).split("."))
           diff = int(routeNet, 2) - int(packetNet, 2) # 1 2 -1 -2
-          if diff == 1 or diff == -256 or ((route["aggregationCount"] > 0 and packet["aggregationCount"] > 0) and (diff == 1 or diff == -256)) :
+          if diff == 1 or diff == -256 or ((route["aggregationCount"] == 1 and packet["aggregationCount"] == 1)) :
             #Do the actual coalescing
             newRoute = {"network": route["network"], 
                 "netmask": self.decrementNetmask(route["netmask"], diff), 
