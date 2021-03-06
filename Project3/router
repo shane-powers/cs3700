@@ -272,14 +272,7 @@ class Router:
     """ handle update packets """
     message = packet["msg"]
 
-    # 1) save a copy of the announcement in case we need it later
-    self.updates.append(packet)
-
-    # 2) add an entry to our forwarding table
-    newASPath = message["ASPath"]
-    newASPath.append(self.asn)
-    
-    self.coalesce({"network": message["network"], 
+    goodVariableName = {"network": message["network"], 
         "netmask": message["netmask"], 
         "localpref": message["localpref"], 
         "ASPath": message["ASPath"], 
@@ -287,7 +280,15 @@ class Router:
         "selfOrigin": message["selfOrigin"],
         "peer": packet["src"],
         "aggregationCount": 0
-        })
+        }
+    # 1) save a copy of the announcement in case we need it later
+    self.updates.append(goodVariableName)
+
+    # 2) add an entry to our forwarding table
+    newASPath = message["ASPath"]
+    newASPath.append(self.asn)
+    
+    self.coalesce(goodVariableName)
 
     # 3) potentially send copies of the announcement to neighboring routers 
     # Currently sends packet to all other connections
@@ -322,6 +323,14 @@ class Router:
         sameMask = route["netmask"] == network["netmask"]
         if sameNeighbor and sameIP and sameMask:
           self.routes.pop(i) # can cause troubles with for loop
+
+        for x in range(len(self.updates) - 1):
+          update = self.updates[i]
+          sameNeighbor = update["peer"] == neighborToRevokeFrom 
+          sameIP = update["network"] == network["network"]
+          sameMask = update["netmask"] == network["netmask"]
+          if sameNeighbor and sameIP and sameMask:
+            self.updates.pop(x)
 
     # 3) potentially send copies of the announcement to neighboring routers
     revokeRelation = self.relations[neighborToRevokeFrom]
