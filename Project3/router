@@ -305,6 +305,25 @@ class Router:
           self.send_new_packet(key, packet)
     return False
 
+  def rebuild(self):
+    self.routes = []
+    for update in self.updates:
+      message = update["msg"]
+
+      # 2) add an entry to our forwarding table
+      newASPath = message["ASPath"]
+      newASPath.append(self.asn)
+      
+      self.coalesce({"network": message["network"], 
+          "netmask": message["netmask"], 
+          "localpref": message["localpref"], 
+          "ASPath": message["ASPath"], 
+          "origin": message["origin"], 
+          "selfOrigin": message["selfOrigin"],
+          "peer": update["src"],
+          "aggregationCount": 0
+          })
+
   def revoke(self, packet):
     """ handle revoke packets """
   
@@ -333,8 +352,7 @@ class Router:
       #     self.updates.pop(i) # can cause troubles with for loop
       
     # rebuild forwarding table
-    # for update in self.updates:
-    #   self.update()
+    self.rebuild()
 
     # 3) potentially send copies of the announcement to neighboring routers
     revokeRelation = self.relations[neighborToRevokeFrom]
