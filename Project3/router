@@ -326,7 +326,7 @@ class Router:
 
         print("updates before: " + str(self.updates))
         for x in range(len(self.updates) - 1):
-          update = self.updates[i]
+          update = self.updates[x]
           sameNeighbor = update["peer"] == neighborToRevokeFrom 
           sameIP = update["network"] == network["network"]
           sameMask = update["netmask"] == network["netmask"]
