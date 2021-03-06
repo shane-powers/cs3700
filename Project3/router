@@ -345,7 +345,7 @@ class Router:
         # TODO for last test
         for i in range(len(self.updates) - 1):
           update = self.updates[i]
-          sameNeighbor = updates["src"] == neighborToRevokeFrom 
+          sameNeighbor = update["src"] == neighborToRevokeFrom 
           sameIP = update["msg"]["network"] == network["network"]
           sameMask = update["msg"]["netmask"] == network["netmask"]
           if sameNeighbor and sameIP and sameMask:
