@@ -320,7 +320,7 @@ class Router:
           "ASPath": message["ASPath"], 
           "origin": message["origin"], 
           "selfOrigin": message["selfOrigin"],
-          "peer": update["src"],
+          "peer": update["dst"],
           "aggregationCount": 0
           })
 
