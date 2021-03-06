@@ -320,7 +320,7 @@ class Router:
           "ASPath": message["ASPath"], 
           "origin": message["origin"], 
           "selfOrigin": message["selfOrigin"],
-          "peer": update["dst"],
+          "peer": update["src"],
           "aggregationCount": 0
           })
 
@@ -342,14 +342,14 @@ class Router:
         if sameNeighbor and sameIP and sameMask:
           self.routes.pop(i) # can cause troubles with for loop
 
-      # TODO for last test
-      # for i in range(len(self.updates) - 1):
-      #   update = self.updates[i]
-      #   sameNeighbor = updates["peer"] == neighborToRevokeFrom 
-      #   sameIP = route["network"] == network["network"]
-      #   sameMask = route["netmask"] == network["netmask"]
-      #   if sameNeighbor and sameIP and sameMask:
-      #     self.updates.pop(i) # can cause troubles with for loop
+        # TODO for last test
+        for i in range(len(self.updates) - 1):
+          update = self.updates[i]
+          sameNeighbor = updates["src"] == neighborToRevokeFrom 
+          sameIP = update["msg"]["network"] == network["network"]
+          sameMask = update["msg"]["netmask"] == network["netmask"]
+          if sameNeighbor and sameIP and sameMask:
+            self.updates.pop(i) # can cause troubles with for loop
       
     # rebuild forwarding table
     self.rebuild()
