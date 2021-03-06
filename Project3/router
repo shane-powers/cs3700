@@ -346,6 +346,7 @@ class Router:
     updatesCopy = self.updates
     self.updates = []
     for update in updatesCopy:
+      print("comparing: " + str(update["src"]) + ", to: " + str(neighborToRevokeFrom))
       sameNeighbor = update["src"] == neighborToRevokeFrom 
       sameIP = update["msg"]["network"] == network["network"]
       sameMask = update["msg"]["netmask"] == network["netmask"]
