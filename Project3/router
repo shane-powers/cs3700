@@ -305,25 +305,6 @@ class Router:
           self.send_new_packet(key, packet)
     return False
 
-  def rebuild(self):
-    self.routes = []
-    for update in self.updates:
-      message = update["msg"]
-
-      # 2) add an entry to our forwarding table
-      newASPath = message["ASPath"]
-      newASPath.append(self.asn)
-      
-      self.coalesce({"network": message["network"], 
-          "netmask": message["netmask"], 
-          "localpref": message["localpref"], 
-          "ASPath": message["ASPath"], 
-          "origin": message["origin"], 
-          "selfOrigin": message["selfOrigin"],
-          "peer": update["dst"],
-          "aggregationCount": 0
-          })
-
   def revoke(self, packet):
     """ handle revoke packets """
   
@@ -341,23 +322,6 @@ class Router:
         sameMask = route["netmask"] == network["netmask"]
         if sameNeighbor and sameIP and sameMask:
           self.routes.pop(i) # can cause troubles with for loop
-
-    # rebuild updates
-    updatesCopy = self.updates
-    self.updates = []
-    for update in updatesCopy:
-      print("comparing: " + str(update["dst"]) + ", to: " + str(neighborToRevokeFrom))
-      sameNeighbor = update["dst"] == neighborToRevokeFrom 
-      sameIP = update["msg"]["network"] == network["network"]
-      sameMask = update["msg"]["netmask"] == network["netmask"]
-      if sameNeighbor and sameIP and sameMask:
-        print("made it")
-        continue
-      else:
-        self.updates.append(update)
-
-    # rebuild forwarding table
-    self.rebuild()
 
     # 3) potentially send copies of the announcement to neighboring routers
     revokeRelation = self.relations[neighborToRevokeFrom]
