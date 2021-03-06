@@ -349,6 +349,7 @@ class Router:
           sameIP = update["msg"]["network"] == network["network"]
           sameMask = update["msg"]["netmask"] == network["netmask"]
           if sameNeighbor and sameIP and sameMask:
+            print("removing this IP: " + str(self.updates[i]))
             self.updates.pop(i) # can cause troubles with for loop
       
     # rebuild forwarding table
