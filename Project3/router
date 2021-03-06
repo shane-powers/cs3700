@@ -332,6 +332,11 @@ class Router:
           if sameNeighbor and sameIP and sameMask:
             self.updates.pop(x)
 
+    # rebuild
+    self.routes = []
+    for update in self.updates:
+      self.coalesce(update)
+
     # 3) potentially send copies of the announcement to neighboring routers
     revokeRelation = self.relations[neighborToRevokeFrom]
     if revokeRelation == "cust":
