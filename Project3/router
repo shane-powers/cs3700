@@ -331,7 +331,7 @@ class Router:
           sameIP = update["network"] == network["network"]
           sameMask = update["netmask"] == network["netmask"]
           if sameNeighbor and sameIP and sameMask:
-            print("removing: " + str(update[x]))
+            print("removing: " + str(self.updates[x]))
             self.updates.pop(x)
         print("updates after: " + str(self.updates))
         
