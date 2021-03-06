@@ -345,10 +345,10 @@ class Router:
         # TODO for last test
         for i in range(len(self.updates) - 1):
           update = self.updates[i]
-          sameNeighbor = update["src"] == neighborToRevokeFrom 
+          #sameNeighbor = update["src"] == neighborToRevokeFrom 
           sameIP = update["msg"]["network"] == network["network"]
           sameMask = update["msg"]["netmask"] == network["netmask"]
-          if sameNeighbor and sameIP and sameMask:
+          if sameIP and sameMask:
             print("removing this IP: " + str(self.updates[i]))
             self.updates.pop(i) # can cause troubles with for loop
       
