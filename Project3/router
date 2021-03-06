@@ -323,16 +323,16 @@ class Router:
         if sameNeighbor and sameIP and sameMask:
           self.routes.pop(i) # can cause troubles with for loop
 
-      # TODO for last test
-      for i in range(len(self.updates) - 1):
-        update = self.updates[i]
-        sameNeighbor = update["src"] == neighborToRevokeFrom 
-        sameIP = route["network"] == network["network"]
-        sameMask = route["netmask"] == network["netmask"]
-        if sameNeighbor and sameIP and sameMask:
-          self.updates.pop(i) # can cause troubles with for loop
+      # # remove that update
+      # for i in range(len(self.updates) - 1):
+      #   update = self.updates[i]
+      #   sameNeighbor = update["src"] == neighborToRevokeFrom 
+      #   sameIP = route["network"] == network["network"]
+      #   sameMask = route["netmask"] == network["netmask"]
+      #   if sameNeighbor and sameIP and sameMask:
+      #     self.updates.pop(i) # can cause troubles with for loop
       
-    # rebuild forwarding table
+    # rebuild forwarding table from updates
     self.routes = []
     for update in self.updates:
       message = update["msg"]
