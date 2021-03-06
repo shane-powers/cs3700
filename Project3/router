@@ -324,17 +324,13 @@ class Router:
         if sameNeighbor and sameIP and sameMask:
           self.routes.pop(i) # can cause troubles with for loop
 
-        print("updates before: " + str(self.updates))
         for x in range(len(self.updates) - 1):
           update = self.updates[x]
           sameNeighbor = update["peer"] == neighborToRevokeFrom 
           sameIP = update["network"] == network["network"]
           sameMask = update["netmask"] == network["netmask"]
           if sameNeighbor and sameIP and sameMask:
-            print("removing: " + str(self.updates[x]))
             self.updates.pop(x)
-        print("updates after: " + str(self.updates))
-        
 
     # rebuild
     self.routes = []
