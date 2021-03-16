@@ -1,3 +1,20 @@
+# Router Implementation
+## High-Level Approach
+- We began by implementing support for revoke messages. Out of everything we had to do after the milestone, this was the most simple. We began by looking through the revoke packet message to determine which networks we had to revoke. After determining this, we removed any revoked networks from our forwarding table. 
+- For the milestone, we were using a dictionary for our forwarding table. We realized that it would be much easier to work with a list because we would frequently be adding and removing elements. 
+- We then had to forward the revoke packet. If the packet was received from a customer, we forwarded it to all other neighbors. If the packet was received fromn a peer or a provider, we only forwarded it to customers. We also added this functionality to our update function.
+- We then had to handle the dropping of data packets when they were not profitable. We did this by checking to see if the destination of the packet was in our forwarding table. If it was, we went ahead and forwarded it. If not, we dropped the data packet.
+- We then had to implement the longest common prefix algorithm. We did this by converting the networks to a binary string and iterating through them. As we incremented through them, we compared each bit. While doing this, we kept track of the longest common prefix we could find.
+- The final and most difficult part was implementing the coalesce function. In this function, we took in a packet and compared it to every entry in our forwarding table. We compared every attribute of the packet to every attribute of each route in our forwarding table (ASPath, origin, etc...). If they matched, we then compared the binary strings of the networks of the route and the packet. If these matched, we were ready to coalesce. To coalesce, we created a new route that contained all of the attributes of the existing route in the forwarding table, except for the netmask. We modified the netmask by one bit, either up or down depending on the relation to the compared packet, and then added that to the new route. We then removed the existing route from the forwarding table, and called coalesce again with our new route. By doing this, we could see if the newly coalesced route would need to be coalesced again. If not, the route supplied to the function is added to the forwarding table.
+- We then had to modify our implementation of route. Every time revoke is called, we empty our forwarding table and repopulate by calling coalesce on every entry in our updates table.
+
+## Challenges Faced
+- Most of our issues were from a lack of conceptual understanding when it came to the functions we were implementing. This made it particularly difficult to troubleshoot when we ran into issues. We both had to do our fair share of research on what was actually occurring.
+- When we were implementing the coalesce function, we initially had trouble with what actually defined a numerical adjecent network. We initially assumed that this meant there could only be a difference of 1 between the two network addresses, but this was incorrect. We realized that we were being too specific with our definition of neighbor. This was a big issue that was preventing us from passing the 6-2 tests. After fixing this, we were able to pass them.
+
+## Overview of tests
+- Our testing for the final implementation was in a similar fashion to that of the milestone.
+
 # Router Implementation Milestone
 
 ## High-Level Approach
