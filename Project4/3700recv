@@ -50,7 +50,9 @@ while True:
 
       # If the EOF flag is set, exit
       if (decoded['eof']):
-        for sequence_key in sorted(packets_received.keys()):
+        packet_keys = packets_received.keys()
+        packet_keys.sort()
+        for sequence_key in packet_keys:
             sys.stdout.write(packets_received[sequence_key])
             log(str(packets_received[sequence_key]))
         log("[completed]")
