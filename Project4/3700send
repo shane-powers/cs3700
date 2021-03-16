@@ -26,46 +26,61 @@ dest = (UDP_IP, UDP_PORT)
 sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) 
 sock.settimeout(TIMEOUT)
 
+#################################################################
+SENT_PACKETS = {}
+
 def log(string):
   sys.stderr.write(datetime.datetime.now().strftime("%H:%M:%S.%f") + " " + string + "\n")
 
 def send_next_packet():
   global SEQUENCE
-
   data = sys.stdin.read(DATA_SIZE)
   if (len(data) > 0):
-    #data = data.replace("\\", "\\\\")
     msg = json.dumps({"sequence": SEQUENCE, "data": data, "ack": False, "eof": False})
+    SENT_PACKETS[SEQUENCE] = msg
     SEQUENCE += len(data)
-
-    if sock.sendto(msg, dest) < len(msg):
-      log("[error] unable to fully send packet")
-    else:
-      log("[send data] " + str(SEQUENCE) + " (" + str(len(data)) + ")")
+    log("[added packet to send] " + str(SEQUENCE) + " (" + str(len(data)) + ")")
     return True
   else:
+    LAST_SEQ = SEQUENCE
     return False
 
-# Send first packet
-send_next_packet()
+def build_packets_to_send():
+  loop = send_next_packet()
+  while loop:
+    loop = send_next_packet()
+
+build_packets_to_send()
+
+######################################################################
+def send_packet(msg):
+  if sock.sendto(msg, dest) < len(msg):
+      log("[error] unable to fully send packet")
+
+def send_packets():
+  values = SENT_PACKETS.values()
+  for i in range(len(values)):
+    send_packet(values[i])
+
+send_packets()
 
 # Now read in data, send packets
 while True:
   log("ABOUT TO SLEEP")
   result = sock.recvfrom(MSG_SIZE)
-
   if result:
     (data, addr) = result
     try:
       decoded = json.loads(data)
-
-      # If there is an ack, send next packet
-      if decoded['ack'] == SEQUENCE:
+      if decoded['ack']:
         log("[recv ack] " + str(SEQUENCE))
-
-        # Try to send next packet; break if no more data
-        if (not send_next_packet()):
+        if decoded['ack'] == SEQUENCE:
+          # if last in SEQUENCE, break
           break
+        else: 
+          continue
+        
+
     except (ValueError, KeyError, TypeError):
       log("[recv corrupt packet]")
   else:
