@@ -16,8 +16,11 @@ def log(string):
 
 MSG_SIZE = 1500
 TIMEOUT = 30
+DATA_SIZE = 500
 
-recvPackets = {}
+#keep track of most recent sequence number
+
+packets_received = {}
 
 # Bind to localhost and an ephemeral port
 UDP_IP = "127.0.0.1"
@@ -32,6 +35,8 @@ sock.settimeout(TIMEOUT)
 UDP_PORT = sock.getsockname()[1]
 log("[bound] " + str(UDP_PORT))
 
+current_sequence = -1
+
 # Now listen for packets
 while True:
   result = sock.recvfrom(MSG_SIZE)
@@ -45,9 +50,9 @@ while True:
 
       # If the EOF flag is set, exit
       if (decoded['eof']):
-        for key in sorted(recvPackets.iterkeys()):
-            sys.stdout.write(recvPackets[key])
-            log(str(recvPackets[key]))
+        for sequence_key in sorted(packets_received.keys()):
+            sys.stdout.write(packets_received[sequence_key])
+            log(str(packets_received[sequence_key]))
         log("[completed]")
         sys.exit(0)
 
@@ -55,16 +60,19 @@ while True:
       if (decoded['data']):
         sequence = decoded['sequence']
 
-        if sequence not in recvPackets:
-            recvPackets[sequence] = decoded['data']
-            # You will need to do much more here
-            log("[recv data] " + str(decoded['sequence']) + " (" + str(len(decoded['data'])) + ") ACCEPTED (in-order)")
-            #sys.stdout.write(decoded['data'])
+        if sequence not in packets_received:
+          packets_received[sequence] = decoded['data']
+          # You will need to do much more here
+          log("[recv data] " + str(decoded['sequence']) + " (" + str(len(decoded['data'])) + ") ACCEPTED (in-order)")
+          # Send back an ack to the sender
+        
+        if sequence > current_sequence and sequence <= (current_sequence + DATA_SIZE):
+          msg = json.dumps({"ack": decoded['sequence'] + len(decoded['data'])})
+          current_sequence = sequence
 
-        # Send back an ack to the sender
-        msg = json.dumps({"ack": decoded['sequence'] + len(decoded['data'])})
+        
 
-      log("ABOUT TO SEND " + msg)
+      log("RECV ABOUT TO SEND " + msg)
 
       if sock.sendto(msg, addr) < len(msg):
         log("[error] unable to fully send packet")
