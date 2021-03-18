@@ -27,60 +27,70 @@ sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 sock.settimeout(TIMEOUT)
 
 #################################################################
-SENT_PACKETS = {}
+PACKETS_TO_SEND = {}
 
 def log(string):
   sys.stderr.write(datetime.datetime.now().strftime("%H:%M:%S.%f") + " " + string + "\n")
 
-def send_next_packet():
+def add_packet_to_sent_packets():
   global SEQUENCE
   data = sys.stdin.read(DATA_SIZE)
   if (len(data) > 0):
     msg = json.dumps({"sequence": SEQUENCE, "data": data, "ack": False, "eof": False})
-    SENT_PACKETS[SEQUENCE] = msg
+    PACKETS_TO_SEND[SEQUENCE] = msg
     SEQUENCE += len(data)
     log("[added packet to send] " + str(SEQUENCE) + " (" + str(len(data)) + ")")
     return True
   else:
-    LAST_SEQ = SEQUENCE
     return False
 
 def build_packets_to_send():
-  loop = send_next_packet()
+  loop = add_packet_to_sent_packets()
   while loop:
-    loop = send_next_packet()
+    loop = add_packet_to_sent_packets()
 
 build_packets_to_send()
-
 ######################################################################
+LAST_ACK_SEQ = 0
+CURRENT_SEQ = 0
+COUNTER = 0
+
 def send_packet(msg):
+  global CURRENT_SEQ, QUEUE
   if sock.sendto(msg, dest) < len(msg):
       log("[error] unable to fully send packet")
-
-def send_packets():
-  values = SENT_PACKETS.values()
-  for i in range(len(values)):
-    send_packet(values[i])
-
-send_packets()
+  CURRENT_SEQ += len(msg)
 
 # Now read in data, send packets
 while True:
   log("ABOUT TO SLEEP")
+  if SEQUENCE == LAST_ACK_SEQ:
+    # if last in SEQUENCE, break, we did it
+    break
+  send_packet(PACKETS_TO_SEND[CURRENT_SEQ])
   result = sock.recvfrom(MSG_SIZE)
   if result:
     (data, addr) = result
     try:
       decoded = json.loads(data)
       if decoded['ack']:
-        log("[recv ack] " + str(SEQUENCE))
-        if decoded['ack'] == SEQUENCE:
-          # if last in SEQUENCE, break
-          break
-        else: 
-          continue
+        received_ack = decoded['ack']
+        log("[recv ack] " + str(received_ack))
+        # TODO do work below here
+
+
+        if received_ack == LAST_ACK_SEQ: 
+          # increment last ack sequence if got ack in order
+          LAST_ACK_SEQ += len(PACKETS_TO_SEND[LAST_ACK_SEQ])
+
+
+        else:
+          # set current sending packet to last acknowledged packet, if 3 misses
+          if COUNTER >= 3:
+            CURRENT_SEQ = LAST_ACK_SEQ
         
 
+        # TODO dont touch below here
     except (ValueError, KeyError, TypeError):
       log("[recv corrupt packet]")
   else:
