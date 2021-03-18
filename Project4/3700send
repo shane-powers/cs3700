@@ -54,17 +54,21 @@ build_packets_to_send()
 LAST_ACK_SEQ = 0
 CURRENT_SEQ = 0
 COUNTER = 0
+QUEUE = {}
+WINDOW_SIZE = 1 # NOT USED YET BUT CAN BE USED TO MODULATE AMMOUNT OF PACKETS SENT
 
 def send_packet(msg):
   global CURRENT_SEQ, QUEUE
   if sock.sendto(msg, dest) < len(msg):
       log("[error] unable to fully send packet")
+  QUEUE[CURRENT_SEQ] = msg
   CURRENT_SEQ += len(msg)
 
 # Now read in data, send packets
 while True:
   log("ABOUT TO SLEEP")
   if SEQUENCE == LAST_ACK_SEQ:
+    log("[last ack received] " + str(LAST_ACK_SEQ))
     # if last in SEQUENCE, break, we did it
     break
   send_packet(PACKETS_TO_SEND[CURRENT_SEQ])
@@ -78,16 +82,23 @@ while True:
         log("[recv ack] " + str(received_ack))
         # TODO do work below here
 
+        if QUEUE.get(received_ack):
+          # queue holds packets sent, remove packet that is acknowleged
+          log("[removing ack from queue]" + str(received_ack))
+          QUEUE.pop(received_ack)
 
         if received_ack == LAST_ACK_SEQ: 
+          log("[received next ack in order] " + str(received_ack))
           # increment last ack sequence if got ack in order
           LAST_ACK_SEQ += len(PACKETS_TO_SEND[LAST_ACK_SEQ])
-
-
+          
         else:
-          # set current sending packet to last acknowledged packet, if 3 misses
+          log("[received ack not in order] " + str(received_ack))
+          COUNTER += 1
           if COUNTER >= 3:
+            log("[counter tripped, resetting]")
             CURRENT_SEQ = LAST_ACK_SEQ
+            QUEUE = {}
         
 
         # TODO dont touch below here
