@@ -28,18 +28,23 @@ sock.settimeout(TIMEOUT)
 
 #################################################################
 PACKETS_TO_SEND = {}
+LAST_SEQUENCE = 0
+SEQUENCE_NUMBERS = []
 
 def log(string):
   sys.stderr.write(datetime.datetime.now().strftime("%H:%M:%S.%f") + " " + string + "\n")
 
 def add_packet_to_sent_packets():
-  global SEQUENCE
+  global SEQUENCE, LAST_SEQUENCE, SEQUENCE_NUMBERS
   data = sys.stdin.read(DATA_SIZE)
   if (len(data) > 0):
     msg = json.dumps({"sequence": SEQUENCE, "data": data, "ack": False, "eof": False})
     PACKETS_TO_SEND[SEQUENCE] = msg
-    SEQUENCE += len(data)
     log("[added packet to send] " + str(SEQUENCE) + " (" + str(len(data)) + ")")
+    SEQUENCE_NUMBERS.append(SEQUENCE)
+    LAST_SEQUENCE = SEQUENCE
+    SEQUENCE += len(data)
+    
     return True
   else:
     return False
@@ -66,14 +71,17 @@ def send_packet(msg):
 
 # Now read in data, send packets
 while True:
+  log("LAST_SEQUENCE: " + str(LAST_SEQUENCE))
   log("ABOUT TO SLEEP")
   
-  if SEQUENCE == LAST_ACK_SEQ:
+  if LAST_SEQUENCE == LAST_ACK_SEQ:
     log("[last ack received] " + str(LAST_ACK_SEQ))
     # if last in SEQUENCE, break, we did it
     break
-  log("Current sequence is: " + str(CURRENT_SEQ))
+  #log("Current sequence is: " + str(CURRENT_SEQ))
+  
   send_packet(PACKETS_TO_SEND[CURRENT_SEQ])
+  
   result = sock.recvfrom(MSG_SIZE)
   if result:
     (data, addr) = result
@@ -84,13 +92,15 @@ while True:
         log("[recv ack] " + str(received_ack))
         # TODO do work below here
 
-        if QUEUE.get(received_ack):
+        #if QUEUE.get(received_ack):
           # queue holds packets sent, remove packet that is acknowleged
-          log("[removing ack from queue]" + str(received_ack))
-          QUEUE.pop(received_ack)
+          # log("[removing ack from queue]" + str(received_ack))
+          # QUEUE.pop(received_ack)
         log("RECEIVED ACK: " + str(received_ack))
         log("LAST_ACK_SEQ: " + str(LAST_ACK_SEQ))
-        if received_ack == LAST_ACK_SEQ: 
+        next_index = SEQUENCE_NUMBERS.index(LAST_ACK_SEQ) + 1
+        next_index = min(next_index, len(SEQUENCE_NUMBERS)-1)
+        if received_ack == SEQUENCE_NUMBERS[next_index]: 
           log("[received next ack in order] " + str(received_ack))
           # increment last ack sequence if got ack in order
           LAST_ACK_SEQ = received_ack
