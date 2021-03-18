@@ -62,15 +62,17 @@ def send_packet(msg):
   if sock.sendto(msg, dest) < len(msg):
       log("[error] unable to fully send packet")
   QUEUE[CURRENT_SEQ] = msg
-  CURRENT_SEQ += len(msg)
+  CURRENT_SEQ += len(json.loads(msg)['data'])
 
 # Now read in data, send packets
 while True:
   log("ABOUT TO SLEEP")
+  
   if SEQUENCE == LAST_ACK_SEQ:
     log("[last ack received] " + str(LAST_ACK_SEQ))
     # if last in SEQUENCE, break, we did it
     break
+  log("Current sequence is: " + str(CURRENT_SEQ))
   send_packet(PACKETS_TO_SEND[CURRENT_SEQ])
   result = sock.recvfrom(MSG_SIZE)
   if result:
@@ -86,11 +88,12 @@ while True:
           # queue holds packets sent, remove packet that is acknowleged
           log("[removing ack from queue]" + str(received_ack))
           QUEUE.pop(received_ack)
-
+        log("RECEIVED ACK: " + str(received_ack))
+        log("LAST_ACK_SEQ: " + str(LAST_ACK_SEQ))
         if received_ack == LAST_ACK_SEQ: 
           log("[received next ack in order] " + str(received_ack))
           # increment last ack sequence if got ack in order
-          LAST_ACK_SEQ += len(PACKETS_TO_SEND[LAST_ACK_SEQ])
+          LAST_ACK_SEQ = received_ack
           
         else:
           log("[received ack not in order] " + str(received_ack))
