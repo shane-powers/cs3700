@@ -63,7 +63,7 @@ while True:
         sequence = decoded['sequence']
         log("RECEIVED SEQUENCE: " + str(decoded['sequence']))
         if sequence == current_sequence:
-          msg = json.dumps({"ack": sequence + len(decoded['data'])})
+          msg = json.dumps({"ack": sequence })
           current_sequence = sequence + len(decoded['data'])
         
           if sequence not in packets_received:
