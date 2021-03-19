@@ -1,0 +1,12 @@
+# High Level Approach
+To start, we began by getting a grasp of what the starter code already provided us with. This took plenty of debugging itself to make sure we are even able to send one packet successfully. After completing this, we began to make some methods what will help in our implementation of a TCP protocol. These methods include sending a packet to the receiver given a certain sequence number, a method that converts our STDIN data to packets all at once in the beginning, as well as several constants to facilitate TCP Reno such as current window size, SSTHRESH, current sequence number to send, last acknowledged sequence number from our receiver, etc. Once these methods and constants were set up, we brute sent all the packets at once, which in a happy network, should pass right away, which we found it did. We then stepped up and developed methods to retransmit if a certain ACK was not received for a sequence number, then that packet will be retransmit. We are happy with the results of this assignment.  
+
+# Challenges Faced
+Some of the challenges we faced are the following:
+    - To get the starter code up and running, as well as develop a sufficient understanding of the starter code took some time. 
+    - Developing a way to retransmit dropped packets as well as to simply identify when a packet was dropped also proved to be a significant hurdle for this assignment. This pairs with the next bullet.
+    - Identifying when a packet was dropped was difficult, but we also had to figure out when our program would freeze up waiting for a packet that gets dropped and will not be received.
+    - Finally, passing the performance tests was difficult, after we were able to pass all of the other tests, we found it difficult to find small tweaks that allowed us to successfully pass the performance tests. 
+
+# Testing Overview
+As far as testing goes, we started with many log statements to stderr which proved to be very helpful. The starter code provided the log statement that we continued to use for the duration of the assignment helped us to identify any edge cases our program ran into during its execution, and to make sure the flow of data is what we expected. We also used the log statements with trial and error, making sure several error cases we identified were met by the use of nettest and other network testing programs we were able to find. The results of these tests, and affirming our understanding of our own code helped us to complete the assignment.

@@ -62,7 +62,7 @@ def send_packets():
   for i in range(len(values)):
     send_packet(values[i])
 
-for i in range(12):
+for i in range(14):
   send_packets()
 
 # Now read in data, send packets
