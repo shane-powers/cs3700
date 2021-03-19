@@ -27,94 +27,61 @@ sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 sock.settimeout(TIMEOUT)
 
 #################################################################
-PACKETS_TO_SEND = {}
-LAST_SEQUENCE = 0
-SEQUENCE_NUMBERS = []
+SENT_PACKETS = {}
 
 def log(string):
   sys.stderr.write(datetime.datetime.now().strftime("%H:%M:%S.%f") + " " + string + "\n")
 
-def add_packet_to_sent_packets():
-  global SEQUENCE, LAST_SEQUENCE, SEQUENCE_NUMBERS
+def send_next_packet():
+  global SEQUENCE
   data = sys.stdin.read(DATA_SIZE)
   if (len(data) > 0):
     msg = json.dumps({"sequence": SEQUENCE, "data": data, "ack": False, "eof": False})
-    PACKETS_TO_SEND[SEQUENCE] = msg
-    log("[added packet to send] " + str(SEQUENCE) + " (" + str(len(data)) + ")")
-    SEQUENCE_NUMBERS.append(SEQUENCE)
-    LAST_SEQUENCE = SEQUENCE
+    SENT_PACKETS[SEQUENCE] = msg
     SEQUENCE += len(data)
-    
+    log("[added packet to send] " + str(SEQUENCE) + " (" + str(len(data)) + ")")
     return True
   else:
+    LAST_SEQ = SEQUENCE
     return False
 
 def build_packets_to_send():
-  loop = add_packet_to_sent_packets()
+  loop = send_next_packet()
   while loop:
-    loop = add_packet_to_sent_packets()
+    loop = send_next_packet()
 
 build_packets_to_send()
-######################################################################
-LAST_ACK_SEQ = 0
-CURRENT_SEQ = 0
-COUNTER = 0
-QUEUE = {}
-WINDOW_SIZE = 1 # NOT USED YET BUT CAN BE USED TO MODULATE AMMOUNT OF PACKETS SENT
 
+######################################################################
 def send_packet(msg):
-  global CURRENT_SEQ, QUEUE
   if sock.sendto(msg, dest) < len(msg):
       log("[error] unable to fully send packet")
-  QUEUE[CURRENT_SEQ] = msg
-  CURRENT_SEQ += len(json.loads(msg)['data'])
+
+def send_packets():
+  values = SENT_PACKETS.values()
+  for i in range(len(values)):
+    send_packet(values[i])
+
+for i in range(12):
+  send_packets()
 
 # Now read in data, send packets
 while True:
-  log("LAST_SEQUENCE: " + str(LAST_SEQUENCE))
   log("ABOUT TO SLEEP")
-  
-  if LAST_SEQUENCE == LAST_ACK_SEQ:
-    log("[last ack received] " + str(LAST_ACK_SEQ))
-    # if last in SEQUENCE, break, we did it
-    break
-  #log("Current sequence is: " + str(CURRENT_SEQ))
-  
-  send_packet(PACKETS_TO_SEND[CURRENT_SEQ])
-  
   result = sock.recvfrom(MSG_SIZE)
   if result:
     (data, addr) = result
     try:
       decoded = json.loads(data)
       if decoded['ack']:
-        received_ack = decoded['ack']
-        log("[recv ack] " + str(received_ack))
-        # TODO do work below here
-
-        #if QUEUE.get(received_ack):
-          # queue holds packets sent, remove packet that is acknowleged
-          # log("[removing ack from queue]" + str(received_ack))
-          # QUEUE.pop(received_ack)
-        log("RECEIVED ACK: " + str(received_ack))
-        log("LAST_ACK_SEQ: " + str(LAST_ACK_SEQ))
-        next_index = SEQUENCE_NUMBERS.index(LAST_ACK_SEQ) + 1
-        next_index = min(next_index, len(SEQUENCE_NUMBERS)-1)
-        if received_ack == SEQUENCE_NUMBERS[next_index]: 
-          log("[received next ack in order] " + str(received_ack))
-          # increment last ack sequence if got ack in order
-          LAST_ACK_SEQ = received_ack
-          
-        else:
-          log("[received ack not in order] " + str(received_ack))
-          COUNTER += 1
-          if COUNTER >= 3:
-            log("[counter tripped, resetting]")
-            CURRENT_SEQ = LAST_ACK_SEQ
-            QUEUE = {}
+        log("[recv ack] " + str(SEQUENCE))
+        if decoded['ack'] == SEQUENCE:
+          # if last in SEQUENCE, break
+          break
+        else: 
+          continue
         
 
-        # TODO dont touch below here
     except (ValueError, KeyError, TypeError):
       log("[recv corrupt packet]")
   else:
