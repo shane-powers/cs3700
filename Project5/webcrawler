@@ -18,15 +18,14 @@ sock.settimeout(5)
 
 def pre_login():
     login_get_request = ('GET /accounts/login/ HTTP/1.1\n'
-        'Host: webcrawler-site.ccs.neu.edu\n\n')
+        'Host: ' + HOST + '\n\n')
     sock.connect((HOST, PORT))
     sock.sendall(bytes(login_get_request, "utf-8"))
     login_page_response = str(sock.recv(8192), "utf-8")
     #print(login_page_response)
     return login_page_response
 
-def find_csrf_token(loginHTML):
-    tokenSearch = "csrftoken="
+def find_csrf_token(loginHTML, tokenSearch):
     csrftokenIndex = loginHTML.find(tokenSearch)
     semiIndex = loginHTML[csrftokenIndex:].find(";") + csrftokenIndex
     csrftoken = loginHTML[csrftokenIndex+len(tokenSearch):semiIndex]
@@ -49,7 +48,7 @@ class FindMiddleWareParser(HTMLParser):
 middlewareParser = FindMiddleWareParser()
 loginHTML = pre_login()
 middlewareParser.feed(loginHTML)
-csrftoken = find_csrf_token(loginHTML)
+csrftoken = find_csrf_token(loginHTML, "csrftoken=")
 
 print("middleware token: " + csrfmiddlewaretoken)
 print("csrf token: " + csrftoken)
@@ -57,7 +56,40 @@ print("csrf token: " + csrftoken)
 ################################################################
 # Log in using found tokens and login credentials 
 ################################################################
+sessionID = None
 
+def actual_login():
+    request_content = (
+        "username=" + username + 
+        "&password=" + password +
+        "&csrfmiddlewaretoken=" + csrfmiddlewaretoken + 
+        "&next="
+    )
+    login_request = (
+        'POST /accounts/login/ HTTP/1.1\n'
+        'Host: ' + HOST + '\n'
+        'Cookie: csrftoken=' + csrftoken + '\n'
+        'Content-Type: application/x-www-form-urlencoded\n'
+        'Referer: http://webcrawler-site.ccs.neu.edu/accounts/login/\n'
+        'Content-Length:' + str(len(request_content)) + '\n\n'
+        '' + request_content + '\n\n'
+    )
+    sock.sendall(bytes(login_request, "utf-8"))
+    login_response = str(sock.recv(8192), "utf-8")
+    #print(login_response)
+    return login_response
+
+loginResponseHTML = actual_login()
+
+sessionID = find_csrf_token(loginResponseHTML, "sessionid=")
+csrftoken = find_csrf_token(loginResponseHTML, "csrftoken=")
+
+print("session id: " + sessionID)
+print("csrf token: " + csrftoken)
+
+################################################################
+# Crawling
+################################################################
 
 
 
