@@ -3,23 +3,63 @@
 import sys
 import socket
 from html.parser import HTMLParser
+from html.entities import name2codepoint
 
-#username = sys.argv[0]
-#password = sys.argv[1]
+username = "fallon.k"
+password = "Q7C4MFK0J5G5OLZN"
 HOST = 'webcrawler-site.ccs.neu.edu'
 PORT = 80
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 sock.settimeout(5)
 
+################################################################
+# Find Middleware and CSRF Tokens
+################################################################
 
-
-def login():
+def pre_login():
     login_get_request = ('GET /accounts/login/ HTTP/1.1\n'
         'Host: webcrawler-site.ccs.neu.edu\n\n')
-
     sock.connect((HOST, PORT))
     sock.sendall(bytes(login_get_request, "utf-8"))
     login_page_response = str(sock.recv(8192), "utf-8")
-    print(login_page_response)
+    #print(login_page_response)
+    return login_page_response
 
-login()
+def find_csrf_token(loginHTML):
+    tokenSearch = "csrftoken="
+    csrftokenIndex = loginHTML.find(tokenSearch)
+    semiIndex = loginHTML[csrftokenIndex:].find(";") + csrftokenIndex
+    csrftoken = loginHTML[csrftokenIndex+len(tokenSearch):semiIndex]
+    return csrftoken
+
+csrfmiddlewaretoken = None
+csrftoken = None
+
+class FindMiddleWareParser(HTMLParser):
+    def handle_starttag(self, tag, attrs):
+        global csrfmiddlewaretoken
+        if tag == "input":
+            for attr in attrs:
+                if(attr[0] == "name" and attr[1] == "csrfmiddlewaretoken"):
+                    for attr in attrs:
+                        if(attr[0] == "value"):
+                            csrfmiddlewaretoken = attr[1]
+                            return
+
+middlewareParser = FindMiddleWareParser()
+loginHTML = pre_login()
+middlewareParser.feed(loginHTML)
+csrftoken = find_csrf_token(loginHTML)
+
+print("middleware token: " + csrfmiddlewaretoken)
+print("csrf token: " + csrftoken)
+
+################################################################
+# Log in using found tokens and login credentials 
+################################################################
+
+
+
+
+
+
