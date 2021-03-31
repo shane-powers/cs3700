@@ -2,6 +2,7 @@
 
 import sys
 import socket
+import time
 from html.parser import HTMLParser
 from html.entities import name2codepoint
 
@@ -12,12 +13,15 @@ PORT = 80
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 sock.settimeout(5)
 
+
 ################################################################
 # Find Middleware and CSRF Tokens
 ################################################################
 
 def pre_login():
-    login_get_request = ('GET /accounts/login/ HTTP/1.1\n'
+    login_get_request = (
+        'GET /accounts/login/ HTTP/1.1\n'
+        'Connection: keep-alive\n'
         'Host: ' + HOST + '\n\n')
     sock.connect((HOST, PORT))
     sock.sendall(bytes(login_get_request, "utf-8"))
@@ -50,8 +54,8 @@ loginHTML = pre_login()
 middlewareParser.feed(loginHTML)
 csrftoken = find_csrf_token(loginHTML, "csrftoken=")
 
-print("middleware token: " + csrfmiddlewaretoken)
-print("csrf token: " + csrftoken)
+# print("middleware token: " + csrfmiddlewaretoken)
+# print("csrf token: " + csrftoken)
 
 ################################################################
 # Log in using found tokens and login credentials 
@@ -59,10 +63,11 @@ print("csrf token: " + csrftoken)
 sessionID = None
 
 def actual_login():
+    global username, password, csrfmiddlewaretoken, csrftoken
     request_content = (
-        "username=" + username + 
-        "&password=" + password +
-        "&csrfmiddlewaretoken=" + csrfmiddlewaretoken + 
+        "username=" + str(username) + 
+        "&password=" + str(password) +
+        "&csrfmiddlewaretoken=" + str(csrfmiddlewaretoken) + 
         "&next="
     )
     login_request = (
@@ -71,6 +76,7 @@ def actual_login():
         'Cookie: csrftoken=' + csrftoken + '\n'
         'Content-Type: application/x-www-form-urlencoded\n'
         'Referer: http://webcrawler-site.ccs.neu.edu/accounts/login/\n'
+        'Connection: keep-alive\n'
         'Content-Length:' + str(len(request_content)) + '\n\n'
         '' + request_content + '\n\n'
     )
@@ -84,13 +90,65 @@ loginResponseHTML = actual_login()
 sessionID = find_csrf_token(loginResponseHTML, "sessionid=")
 csrftoken = find_csrf_token(loginResponseHTML, "csrftoken=")
 
-print("session id: " + sessionID)
-print("csrf token: " + csrftoken)
+# print("session id: " + sessionID)
+# print("csrf token: " + csrftoken)
 
 ################################################################
-# Crawling
+# Crawling Fakebook and finding secret keys
 ################################################################
+uncrawledLinks = {'/fakebook/'}
+crawledLinks = {'/accounts/logout/','/'}
+secretKeys = []
 
+flagExample = "<h2 class='secret_flag' style=\"color:red\">FLAG: 64-characters-of-random-alphanumerics</h2>"
+root = "/fakebook/"
+
+class FindSecretKeysParser(HTMLParser):
+    def handle_starttag(self, tag, attrs):
+        global uncrawledLinks, crawledLinks, secretKeys
+        if tag == "a":
+            for attr in attrs:
+                # add link to uncrawled if not in crawled
+                if attr[0] == "href":
+                    link = attr[1]
+                    if link[:10] == root:
+                        if link not in crawledLinks:
+                            uncrawledLinks.add(link)
+                            return
+            return
+
+    def handle_data(self, data):
+        if data[5:] == "FLAG:":
+            print("FOUND A FLAG: " + data)
+            secretKeys.append(data)
+
+secretKeysParser = FindSecretKeysParser()
+
+def build_get_request(location):
+    try:
+        request = ('GET ' + location + ' HTTP/1.1\n'
+            'Host: ' + HOST + '\n'
+            'Connection: keep-alive\n'
+            'Cookie: csrftoken=' + csrftoken + '; sessionid=' + sessionID + ';\n\n')
+        sock.sendall(bytes(request, "utf-8"))
+        response = str(sock.recv(8192), "utf-8")
+        crawledLinks.add(location)
+        return response
+    except:
+        print("error")
+
+while True:
+    #time.sleep(.1)
+    if len(secretKeys) >= 5: break
+    currentPageLocation = uncrawledLinks.pop()
+    print("Page to search: " + currentPageLocation)
+    pageContent = build_get_request(currentPageLocation)
+    try:
+        secretKeysParser.feed(pageContent)
+    except:
+        print("error down here")
+    print(pageContent)
+    
 
 
 
