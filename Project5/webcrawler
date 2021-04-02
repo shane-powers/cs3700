@@ -6,8 +6,8 @@ import time
 from html.parser import HTMLParser
 from html.entities import name2codepoint
 
-username = "fallon.k"
-password = "Q7C4MFK0J5G5OLZN"
+username = sys.argv[1]
+password = sys.argv[2]
 HOST = 'webcrawler-site.ccs.neu.edu'
 PORT = 80
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -102,8 +102,10 @@ secretKeys = []
 
 flagExample = "<h2 class='secret_flag' style=\"color:red\">FLAG: 64-characters-of-random-alphanumerics</h2>"
 root = "/fakebook/"
+counter = 1
 
 class FindSecretKeysParser(HTMLParser):
+    
     def handle_starttag(self, tag, attrs):
         global uncrawledLinks, crawledLinks, secretKeys
         if tag == "a":
@@ -116,11 +118,20 @@ class FindSecretKeysParser(HTMLParser):
                             uncrawledLinks.add(link)
                             return
             return
+        # if tag == "h2":
+        #     for attr in attrs:
+        #         if attr[0] == "class":
+        #             if attr[1] == "secret_flag":
+        #                 print("SECRET FLAG FOUND!!!!!")
+        #                 print(str(attrs))
+                        
+
 
     def handle_data(self, data):
-        if data[5:] == "FLAG:":
-            print("FOUND A FLAG: " + data)
-            secretKeys.append(data)
+        if "FLAG" in data:
+            print(data[6:])
+            #print(data)
+            secretKeys.append(data)   
 
 secretKeysParser = FindSecretKeysParser()
 
@@ -137,19 +148,25 @@ def build_get_request(location):
     except:
         print("error")
 
+time.sleep(2)
+
 while True:
     #time.sleep(.1)
+    if(counter % 50 == 0):    
+        sock.shutdown(socket.SHUT_RDWR)
+        sock.close()
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.settimeout(5)
+        sock.connect((HOST, PORT))
+    #if(counter % 1000 == 0):
+        #print(counter)      
     if len(secretKeys) >= 5: break
     currentPageLocation = uncrawledLinks.pop()
-    print("Page to search: " + currentPageLocation)
+    #print("Page to search: " + currentPageLocation)
     pageContent = build_get_request(currentPageLocation)
     try:
         secretKeysParser.feed(pageContent)
+        counter = counter + 1
     except:
         print("error down here")
-    print(pageContent)
-    
-
-
-
-
+    #print(pageContent)
