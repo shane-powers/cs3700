@@ -19,29 +19,60 @@ last = 0
 received = []
 log=[{'term': 0}]
 current_term = 0
+voted_for = None
 
-def recv_msg(sock):
-	ready = select.select([sock], [], [], 0.1)[0]
-	output = None
-	if sock in ready:
-		output = sock.recv()
-		if len(output == 0):
-			return None
-		else:
-			output = json.loads(output)
-	return output
+def get_random_timeout():
+	#Return value between 150 and 300 ms
+	return random.uniform(150,300)
+
+#Election
+this_role = "follower"
+number_of_machines = len(sys.argv) - 1
+election_timeout = get_random_timeout()
+last_event = time.time()
+
+
+########## ELECTION METHODS 
+
+def send_to_all(msg):
+	ready = select.select([], [sock], [], 0.1)[1]
+	for id in replica_ids:
+		
+		
+
+def request_vote_rpc(term, candidateId, lastLogIndex, lastLogterm):
+	global current_term
+	if term < current_term:
+		send_to_all('{"type": "RequestVote", ""}')
+	if voted_for == null or voted_for == my_id:
+		#grant vote
+		voted_for = candidateId
+
+def begin_election():
+	global voted_for, current_term, this_role
+	#Increment current term
+	current_term += 1
+	#Change role to candidate
+	this_role = "candidate"
+	#issues request vote to each of other servers
+	voted_for = my_id
+
+
+
+
+def nominate_for_election():
+	this_role = "candidate"
+	current_term += 1
+	election_timeout = get_random_timeout()
+	last_event = time.time()
+
+########## MSG Handling
+
+
+########## UTILITY METHODS
 
 def send_msg(sock, msg):
 	return sock.send(msg)
-
-def recv_all_msg(sock):
-	global received
-	while True:
-		message = sock.recv()
-		# if not message:
-		# 	return
-		received.append(message)
-		return
 
 def log_is_current(lastTerm, lastIndex):
 	global log
