@@ -17,62 +17,14 @@ last = 0
 
 #Temporary storage
 received = []
-log=[{'term': 0}]
+log=[{'term': 0, 'command': 'remain follower'}]
 current_term = 0
 voted_for = None
 
-def get_random_timeout():
-	#Return value between 150 and 300 ms
-	return random.uniform(150,300)
-
-#Election
-this_role = "follower"
-number_of_machines = len(sys.argv) - 1
-election_timeout = get_random_timeout()
-last_event = time.time()
-
-
-########## ELECTION METHODS 
-
-def send_to_all(msg):
-	ready = select.select([], [sock], [], 0.1)[1]
-	for id in replica_ids:
-		
-		
-
-def request_vote_rpc(term, candidateId, lastLogIndex, lastLogterm):
-	global current_term
-	if term < current_term:
-		send_to_all('{"type": "RequestVote", ""}')
-	if voted_for == null or voted_for == my_id:
-		#grant vote
-		voted_for = candidateId
-
-def begin_election():
-	global voted_for, current_term, this_role
-	#Increment current term
-	current_term += 1
-	#Change role to candidate
-	this_role = "candidate"
-	#issues request vote to each of other servers
-	voted_for = my_id
-
-
-
-
-def nominate_for_election():
-	this_role = "candidate"
-	current_term += 1
-	election_timeout = get_random_timeout()
-	last_event = time.time()
-
-########## MSG Handling
-
-
 ########## UTILITY METHODS
 
-def send_msg(sock, msg):
-	return sock.send(msg)
+def send_msg(msg):
+	sock.send(json.dumps(msg))
 
 def log_is_current(lastTerm, lastIndex):
 	global log
@@ -88,6 +40,71 @@ def add_headers(msg, dst, _type)
 	global my_id, leader
 	msg['dst'] = dst
 	msg['type'] = _type
+
+
+def get_random_timeout():
+	#Return value between 150 and 300 ms
+	return random.uniform(150,300)
+
+
+def send_to_all(msg):
+	for id in replica_ids:
+		msg['dst'] = id
+		sock.send(json.dumps(msg))
+
+#Election
+this_role = "follower"
+number_of_machines = len(sys.argv) - 1
+election_timeout = get_random_timeout()
+last_event = time.time()
+
+
+########## ELECTION METHODS 	
+
+def request_vote_rpc(term, candidateId, lastLogIndex, lastLogterm):
+	global current_term
+	if term < current_term:
+		msg = {'src': my_id, 'dst': candidateId, 'type': 'RequestVoteResponse', 'data': False}
+		send_msg(msg)
+		return
+	if voted_for == null or voted_for == my_id:
+		#grant vote
+		voted_for = candidateId
+		msg = {'src': my_id, 'dst': candidateId, 'type': 'RequestVoteResponse', 'data': True}
+		send_msg(msg)
+		return
+
+def begin_election():
+	global voted_for, current_term, this_role
+	#Increment current term
+	current_term += 1
+	#Change role to candidate
+	this_role = "candidate"
+	#issues request vote to each of other servers
+	voted_for = my_id
+	data = {
+		'term': current_term,
+		'candidateId': my_id,
+		'lastLogIndex': len(log) -1,
+		'lastLogTerm': log[len(log)-1]['term']
+	}
+	msg = {'src': my_id, 'dst': candidateId, 'type': 'RequestVote', 'data': data}
+	send_to_all(msg)
+	print(str(msg))
+
+
+
+
+def nominate_for_election():
+	this_role = "candidate"
+	current_term += 1
+	election_timeout = get_random_timeout()
+	last_event = time.time()
+
+########## MSG Handling
+
+
+
 	
 
 
@@ -105,7 +122,8 @@ while True:
 		
 		# For now, ignore get() and put() from clients
 		if msg['type'] in ['get', 'put']:
-			print("Received get/put")
+			msg = {'src': my_id, 'dst': msg['src'], 'type': 'fail'}
+			send_to_all(msg)
 		
 		# Handle noop messages. This may be removed from your final implementation
 		elif msg['type'] == 'noop':
