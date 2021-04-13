@@ -20,6 +20,8 @@ received = []
 log=[{'term': 0, 'command': 'remain follower'}]
 current_term = 0
 voted_for = None
+leader = 'FFFF'
+
 
 ########## UTILITY METHODS
 
@@ -61,18 +63,31 @@ last_event = time.time()
 
 ########## ELECTION METHODS 	
 
-def request_vote_rpc(term, candidateId, lastLogIndex, lastLogterm):
+def request_vote_rpc(term, candidateId, lastLogIndex, lastLogTerm):
 	global current_term
 	if term < current_term:
 		msg = {'src': my_id, 'dst': candidateId, 'type': 'RequestVoteResponse', 'data': False}
 		send_msg(msg)
 		return
-	if voted_for == null or voted_for == my_id:
+	if voted_for == null or voted_for == candidateId:
 		#grant vote
 		voted_for = candidateId
 		msg = {'src': my_id, 'dst': candidateId, 'type': 'RequestVoteResponse', 'data': True}
 		send_msg(msg)
 		return
+
+def append_entries_rpc(term, leaderId, prevLogIndex, prevLogTerm, entries, leaderCommit):
+	if term < current_term or log[prevLogIndex] != prevLogTerm:
+		msg = {'src': my_id, 'dst': candidateId, 'type': 'AppendEntriesResponse', 'data': False}
+		send_msg(msg)
+		return
+	for i in range(len(log)):
+		this_entry = log[i]
+		if i < len(entries):
+			that_entry = entries[i]
+
+			if this_entry['term'] != that_entry['term']:
+				log = log[:i]
 
 def begin_election():
 	global voted_for, current_term, this_role
@@ -92,21 +107,27 @@ def begin_election():
 	send_to_all(msg)
 	print(str(msg))
 
+def make_self_leader():
+	global this_role, leader, received_votes
 
-
-
-def nominate_for_election():
-	this_role = "candidate"
-	current_term += 1
-	election_timeout = get_random_timeout()
-	last_event = time.time()
+	this_role = "leader"
+	leader = my_id
+	received_votes = {}
 
 ########## MSG Handling
 
-
-
+def handle_request_vote(msg):
+	request_vote_rpc(msg['data']['term'], msg['data']['candidateId'], msg['data']['lastLogIndex'], msg['data']['lastLogTerm'])
 	
-
+received_votes = {}
+def handle_request_vote_response(msg):
+	global this_role
+	if this_role == "candidate":
+		if msg['data'] == True:
+			received_votes.add(msg['src'])
+			if len(received_votes) > len(replica_ids)/2.0:
+				make_self_leader()
+	
 
 
 
@@ -129,6 +150,12 @@ while True:
 		elif msg['type'] == 'noop':
 			print '%s received a NOOP from %s' % (msg['dst'], msg['src'])
 		
+		elif msg['type'] == "RequestVote":
+			handle_request_vote(msg)
+
+		elif msg['type'] == "RequestVoteResponse":
+			handle_request_vote_response(msg)
+
 	clock = time.time()
 	if clock-last > 2:
 		# Send a no-op message to a random peer every two seconds, just for fun
