@@ -17,10 +17,22 @@ last = 0
 
 #Temporary storage
 received = []
-log=[{'term': 0, 'command': 'remain follower'}]
+
+
+leader = 'FFFF'
+
 current_term = 0
 voted_for = None
-leader = 'FFFF'
+log=[{'term': 0, 'command': 'remain follower'}]
+
+
+
+commitIndex = 0
+lastApplied = 0
+
+nextIndex = 0
+matchIndex = 0
+
 
 
 ########## UTILITY METHODS
@@ -78,9 +90,16 @@ def request_vote_rpc(term, candidateId, lastLogIndex, lastLogTerm):
 
 def append_entries_rpc(term, leaderId, prevLogIndex, prevLogTerm, entries, leaderCommit):
 	if term < current_term or log[prevLogIndex] != prevLogTerm:
-		msg = {'src': my_id, 'dst': candidateId, 'type': 'AppendEntriesResponse', 'data': False}
+		msg = {'src': my_id, 'dst': candidateId, 'type': 'AppendEntriesResponse', 'success': False}
 		send_msg(msg)
 		return
+	
+	if log[prevLogIndex] = prevLogTerm:
+		msg = {'src': my_id, 'dst': candidateId, 'type': 'AppendEntriesResponse', 'success': True}
+	
+	if len(entries) == 0:
+		log = []
+
 	for i in range(len(log)):
 		this_entry = log[i]
 		if i < len(entries):
@@ -88,6 +107,12 @@ def append_entries_rpc(term, leaderId, prevLogIndex, prevLogTerm, entries, leade
 
 			if this_entry['term'] != that_entry['term']:
 				log = log[:i]
+				log.append(entries[i:])
+				break
+		else: 
+			break
+	if(leaderCommit > commitIndex):
+		commitIndex = min(leaderCommit, len(log)-1)
 
 def begin_election():
 	global voted_for, current_term, this_role
@@ -113,6 +138,18 @@ def make_self_leader():
 	this_role = "leader"
 	leader = my_id
 	received_votes = {}
+
+	data = {
+		'term': current_term,
+		'leaderId': my_id,
+		'prevLogIndex': len(log) -1,
+		'prevLogTerm': log[len(log)-1]['term'],
+		'entries': [],
+		'leaderCommit'
+	}
+
+	msg = {'src': my_id, 'dst': candidateId, 'type': 'AppendEntries', 'data': data}
+	send_to_all
 
 ########## MSG Handling
 
