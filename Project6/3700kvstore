@@ -63,13 +63,13 @@ STORE = {}
 ############################# SEND MESSAGE METHODS
 def send_msg(msg):
 	# SENDS A MESSAGE TO THE DST OF THE MESSAGE GIVEN
-	sock.send(json.dumps(msg))
+	sock.sendall(json.dumps(msg).encode())
 
 def send_to_all(msg):
 	# SENDS A MESSAGE TO ALL DSTs IN REPLICA_IDS
 	for id in replica_ids:
 		msg['dst'] = id
-		sock.send(json.dumps(msg))	
+		sock.sendall(json.dumps(msg).encode())	
 
 
 ############################# REQUEST VOTE RPC METHOD
