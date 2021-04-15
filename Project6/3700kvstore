@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 import sys, socket, select, time, json, random
 
@@ -13,88 +13,60 @@ replica_ids = sys.argv[2:]
 sock = socket.socket(socket.AF_UNIX, socket.SOCK_SEQPACKET)
 sock.connect(my_id)
 
-last = 0
-
-#Temporary storage
-received = []
-
-
-leader = 'FFFF'
-
-current_term = 0
-voted_for = None
+############################# PERSISTENT STATE ON ALL SERVERS
+currentTerm = 0
+votedFor = None
 log=[{'term': 0, 'command': 'remain follower'}]
 
-
-
+############################# VOLATILE STATE ON ALL SERVERS
 commitIndex = 0
 lastApplied = 0
 
+############################# VOLATILE STATE ON LEADERS
 nextIndex = 0
 matchIndex = 0
 
+############################# OTHER IMPORTANT VARIABLES
+thisRole = "follower"
+numberOfMachines = len(sys.argv) - 1 # TODO THIS ISNT USED
+electionTimeout = get_random_timeout() # TODO THIS ISNT USED
+lastEvent = time.time() # TODO THIS ISNT USED
 
-
-########## UTILITY METHODS
-
+############################# SEND MESSAGE METHODS
 def send_msg(msg):
+	# SENDS A MESSAGE TO THE DST OF THE MESSAGE GIVEN
 	sock.send(json.dumps(msg))
 
-def log_is_current(lastTerm, lastIndex):
-	global log
-	this_last_term = log[-1]['term']
-	if this_last_term < lastTerm:
-		return True
-	elif this_last_term > lastTerm:
-		return False
-	else:
-		return len(log) -1 <= lastIndex
-
-def add_headers(msg, dst, _type)
-	global my_id, leader
-	msg['dst'] = dst
-	msg['type'] = _type
-
-
-def get_random_timeout():
-	#Return value between 150 and 300 ms
-	return random.uniform(150,300)
-
-
 def send_to_all(msg):
+	# SENDS A MESSAGE TO ALL DSTs IN REPLICA_IDS
 	for id in replica_ids:
 		msg['dst'] = id
-		sock.send(json.dumps(msg))
-
-#Election
-this_role = "follower"
-number_of_machines = len(sys.argv) - 1
-election_timeout = get_random_timeout()
-last_event = time.time()
+		sock.send(json.dumps(msg))	
 
 
-########## ELECTION METHODS 	
-
+############################# REQUEST VOTE RPC METHODS
 def request_vote_rpc(term, candidateId, lastLogIndex, lastLogTerm):
-	global current_term
-	if term < current_term:
+	global currentTerm
+	if term < currentTerm:
 		msg = {'src': my_id, 'dst': candidateId, 'type': 'RequestVoteResponse', 'data': False}
 		send_msg(msg)
 		return
-	if voted_for == null or voted_for == candidateId:
+	if votedFor == None or votedFor == candidateId:
 		#grant vote
-		voted_for = candidateId
+		votedFor = candidateId
 		msg = {'src': my_id, 'dst': candidateId, 'type': 'RequestVoteResponse', 'data': True}
 		send_msg(msg)
 		return
 
+############################# APPEND ENTRIES RPC METHODS
 def append_entries_rpc(term, leaderId, prevLogIndex, prevLogTerm, entries, leaderCommit):
-	if term < current_term or log[prevLogIndex] != prevLogTerm:
+	global log, my_id
+	if term < currentTerm or log[prevLogIndex] != prevLogTerm:
 		msg = {'src': my_id, 'dst': candidateId, 'type': 'AppendEntriesResponse', 'success': False}
 		send_msg(msg)
 		return
 	
-	if log[prevLogIndex] = prevLogTerm:
+	if log[prevLogIndex] == prevLogTerm:
 		msg = {'src': my_id, 'dst': candidateId, 'type': 'AppendEntriesResponse', 'success': True}
 	
 	if len(entries) == 0:
@@ -114,16 +86,17 @@ def append_entries_rpc(term, leaderId, prevLogIndex, prevLogTerm, entries, leade
 	if(leaderCommit > commitIndex):
 		commitIndex = min(leaderCommit, len(log)-1)
 
+############################# STATE TRANSITION METHODS
 def begin_election():
-	global voted_for, current_term, this_role
+	global votedFor, currentTerm, thisRole
 	#Increment current term
-	current_term += 1
+	currentTerm += 1
 	#Change role to candidate
-	this_role = "candidate"
+	thisRole = "candidate"
 	#issues request vote to each of other servers
-	voted_for = my_id
+	votedFor = my_id
 	data = {
-		'term': current_term,
+		'term': currentTerm,
 		'candidateId': my_id,
 		'lastLogIndex': len(log) -1,
 		'lastLogTerm': log[len(log)-1]['term']
@@ -133,42 +106,61 @@ def begin_election():
 	print(str(msg))
 
 def make_self_leader():
-	global this_role, leader, received_votes
+	global thisRole, leader, received_votes
 
-	this_role = "leader"
+	thisRole = "leader"
 	leader = my_id
 	received_votes = {}
 
 	data = {
-		'term': current_term,
+		'term': currentTerm,
 		'leaderId': my_id,
 		'prevLogIndex': len(log) -1,
 		'prevLogTerm': log[len(log)-1]['term'],
 		'entries': [],
-		'leaderCommit'
+		'leaderCommit': "TODO"
 	}
-
 	msg = {'src': my_id, 'dst': candidateId, 'type': 'AppendEntries', 'data': data}
-	send_to_all
+	send_to_all(msg)
 
-########## MSG Handling
+########## UTILITY METHODS
+def log_is_current(lastTerm, lastIndex):
+	global log
+	this_last_term = log[-1]['term']
+	if this_last_term < lastTerm:
+		return True
+	elif this_last_term > lastTerm:
+		return False
+	else:
+		return len(log) -1 <= lastIndex
 
+def add_headers(msg, dst, _type):
+	global my_id, leader
+	msg['dst'] = dst
+	msg['type'] = _type
+
+
+def get_random_timeout():
+	#Return value between 150 and 300 ms
+	return random.uniform(150,300)
+
+############################# HANDLE RECEIVED MESSAGE METHODS
 def handle_request_vote(msg):
 	request_vote_rpc(msg['data']['term'], msg['data']['candidateId'], msg['data']['lastLogIndex'], msg['data']['lastLogTerm'])
 	
 received_votes = {}
 def handle_request_vote_response(msg):
-	global this_role
-	if this_role == "candidate":
+	global thisRole
+	if thisRole == "candidate":
 		if msg['data'] == True:
-			received_votes.add(msg['src'])
+			received_votes.append(msg['src'])
 			if len(received_votes) > len(replica_ids)/2.0:
 				make_self_leader()
 	
 
 
 
-
+############################# MAIN LOOP
 while True:
 	ready = select.select([sock], [], [], 0.1)[0]
 	
@@ -185,7 +177,7 @@ while True:
 		
 		# Handle noop messages. This may be removed from your final implementation
 		elif msg['type'] == 'noop':
-			print '%s received a NOOP from %s' % (msg['dst'], msg['src'])
+			print(msg['dst'] + ' received a NOOP from ' + msg['src'])
 		
 		elif msg['type'] == "RequestVote":
 			handle_request_vote(msg)
@@ -194,10 +186,11 @@ while True:
 			handle_request_vote_response(msg)
 
 	clock = time.time()
+
 	if clock-last > 2:
 		# Send a no-op message to a random peer every two seconds, just for fun
 		# You definitely want to remove this from your implementation
 		msg = {'src': my_id, 'dst': random.choice(replica_ids), 'leader': 'FFFF', 'type': 'noop'}
 		sock.send(json.dumps(msg))
-		print '%s sending a NOOP to %s' % (msg['src'], msg['dst'])
+		print(msg['src'] + ' sending a NOOP to ' + msg['dst'])
 		last = clock
