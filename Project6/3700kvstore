@@ -76,17 +76,17 @@ def send_to_all(msg):
 def request_vote_rpc(term, candidateId, lastLogIndex, lastLogTerm):
 	global currentTerm
 	if term < currentTerm:
-		msg = {'src': my_id, 'dst': candidateId, 'type': 'RequestVoteResponse', 'data': False}
+		msg = {'src': my_id, 'dst': candidateId, 'type': 'RequestVoteResponse', "leader": currentLeader, 'data': False}
 		send_msg(msg)
 		return
 	elif votedFor == None or votedFor == candidateId:
 		#grant vote
 		votedFor = candidateId
-		msg = {'src': my_id, 'dst': candidateId, 'type': 'RequestVoteResponse', 'data': True}
+		msg = {'src': my_id, 'dst': candidateId, 'type': 'RequestVoteResponse', "leader": currentLeader, 'data': True}
 		send_msg(msg)
 		return
 	else:
-		msg = {'src': my_id, 'dst': candidateId, 'type': 'RequestVoteResponse', 'data': False}
+		msg = {'src': my_id, 'dst': candidateId, 'type': 'RequestVoteResponse', "leader": currentLeader, 'data': False}
 		send_msg(msg)
 		return
 
@@ -94,12 +94,12 @@ def request_vote_rpc(term, candidateId, lastLogIndex, lastLogTerm):
 def append_entries_rpc(term, leaderId, prevLogIndex, prevLogTerm, entries, leaderCommit):
 	global log, my_id, lastEvent, currentLeader
 	if term < currentTerm or log[prevLogIndex] != prevLogTerm: # TODO CATCH ERROR OUT OF BOUNDS INDEX
-		msg = {'src': my_id, 'dst': leaderId, 'type': 'AppendEntriesResponse', 'success': False}
+		msg = {'src': my_id, 'dst': leaderId, 'type': 'AppendEntriesResponse', "leader": currentLeader, 'success': False}
 		send_msg(msg)
 		return
 	
 	if log[prevLogIndex] == prevLogTerm: # TODO CATCH ERROR OUT OF BOUNDS INDEX
-		msg = {'src': my_id, 'dst': leaderId, 'type': 'AppendEntriesResponse', 'success': True}
+		msg = {'src': my_id, 'dst': leaderId, 'type': 'AppendEntriesResponse', "leader": currentLeader, 'success': True}
 		send_msg(msg)
 		currentLeader = leaderId
 		lastEvent = time.time()
@@ -123,7 +123,7 @@ def sendHeartbeat():
 		'entries': [],
 		'leaderCommit': commitIndex
 	}
-	msg = {'src': my_id, 'dst': "None", 'type': 'AppendEntries', 'data': data}
+	msg = {'src': my_id, 'dst': "None", 'type': 'AppendEntries', "leader": currentLeader, 'data': data}
 	send_to_all(msg)
 
 def begin_election():
@@ -141,7 +141,7 @@ def begin_election():
 		'lastLogIndex': len(log) - 1,
 		'lastLogTerm': log[len(log)-1]['term']
 	}
-	msg = {'src': my_id, 'dst': "None", 'type': 'RequestVote', 'data': data} # TODO MIGHT BREAK
+	msg = {'src': my_id, 'dst': "None", 'type': 'RequestVote', "leader": currentLeader, 'data': data} # TODO MIGHT BREAK
 	send_to_all(msg)
 	print(str(msg))
 
