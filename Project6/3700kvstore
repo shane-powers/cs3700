@@ -74,7 +74,7 @@ def send_to_all(msg):
 
 ############################# REQUEST VOTE RPC METHOD
 def request_vote_rpc(term, candidateId, lastLogIndex, lastLogTerm):
-	global currentTerm
+	global currentTerm, votedFor
 	if term < currentTerm:
 		msg = {'src': my_id, 'dst': candidateId, 'type': 'RequestVoteResponse', "leader": currentLeader, 'data': False}
 		send_msg(msg)
