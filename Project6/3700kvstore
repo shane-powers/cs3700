@@ -111,7 +111,7 @@ def append_entries_rpc(term, leaderId, prevLogIndex, prevLogTerm, entries, leade
 		commitIndex = min(leaderCommit, len(log)-1)
 
 ############################# STATE TRANSITION METHODS
-receivedVotes = {}
+receivedVotes = []
 
 def sendHeartbeat():
 	global currentTerm, my_id, log, commitIndex
@@ -128,7 +128,7 @@ def sendHeartbeat():
 
 def begin_election():
 	global votedFor, currentTerm, thisRole, receivedVotes
-	receivedVotes = {}
+	receivedVotes = []
 	#Increment current term
 	currentTerm += 1
 	#Change role to candidate
@@ -149,7 +149,7 @@ def make_self_leader():
 	global thisRole, currentLeader, receivedVotes
 	thisRole = "leader"
 	currentLeader = my_id
-	receivedVotes = {}
+	receivedVotes = []
 	sendHeartbeat()
 
 ############################# HANDLE RECEIVED MESSAGE METHODS
@@ -161,8 +161,8 @@ def handle_request_vote_response(msg):
 	global thisRole, receivedVotes
 	if thisRole == "candidate" and msg['dst'] == my_id:
 		if msg['data'] == True:
-			receivedVotes[currentTerm].append(msg['src'])
-		if len(receivedVotes[currentTerm]) > len(replica_ids)/2.0:
+			receivedVotes.append(msg['src'])
+		if len(receivedVotes) > len(replica_ids)/2.0:
 			make_self_leader() # TODO BE PREPARED TO HANDLE NOT GETTING HERE
 
 def handle_append_entries(msg):
