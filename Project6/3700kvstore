@@ -36,6 +36,7 @@ numberOfMachines = len(sys.argv) - 1 # TODO THIS ISNT USED
 electionTimeout = get_random_timeout() 
 lastEvent = time.time() # TODO THIS ISNT USED
 currentLeader = None
+STORE = {}
 
 '''
 1) leader election
@@ -91,7 +92,7 @@ def request_vote_rpc(term, candidateId, lastLogIndex, lastLogTerm):
 
 ############################# APPEND ENTRIES RPC METHOD
 def append_entries_rpc(term, leaderId, prevLogIndex, prevLogTerm, entries, leaderCommit):
-	global log, my_id, lastEvent
+	global log, my_id, lastEvent, currentLeader
 	if term < currentTerm or log[prevLogIndex] != prevLogTerm: # TODO CATCH ERROR OUT OF BOUNDS INDEX
 		msg = {'src': my_id, 'dst': leaderId, 'type': 'AppendEntriesResponse', 'success': False}
 		send_msg(msg)
@@ -100,6 +101,7 @@ def append_entries_rpc(term, leaderId, prevLogIndex, prevLogTerm, entries, leade
 	if log[prevLogIndex] == prevLogTerm: # TODO CATCH ERROR OUT OF BOUNDS INDEX
 		msg = {'src': my_id, 'dst': leaderId, 'type': 'AppendEntriesResponse', 'success': True}
 		send_msg(msg)
+		currentLeader = leaderId
 		lastEvent = time.time()
 		return
 	#else:
@@ -192,13 +194,43 @@ while True:
 		msg = json.loads(msg_raw)
 		
 		# For now, ignore get() and put() from clients
-		if msg['type'] in ['get', 'put']:
-			msg = {'src': my_id, 'dst': msg['src'], 'type': 'fail'}
-			send_to_all(msg)
-		
-		# Handle noop messages. This may be removed from your final implementation
-		elif msg['type'] == 'noop':
-			print(msg['dst'] + ' received a NOOP from ' + msg['src'])
+		if msg['type'] == 'get':
+			'''
+			{"src": "<ID>", 
+			"dst": "<ID>", 
+			"leader": "<ID>", 
+			"type": "get", 
+			"MID": "<a unique string>", 
+			"key": "<some key>"}
+			'''
+			response = STORE["key"] # will be a value or 'None'
+			print("trying to retreive value from key: " + msg["key"])
+			if response:
+				print("retreived value: " + response + ", from key: " + msg["key"])
+				# {"src": "<ID>", "dst": "<ID>", "leader": "<ID>", "type": "ok", "MID": "<a unique string>", "value": "<value of the key>"}
+				reply = {'src': my_id, 'dst': msg["src"], "leader": currentLeader, 'type': 'ok', "MID": msg["MID"], "value": response} 
+				send_msg(reply)
+			else:
+				print("retreived no value from key: " + msg["key"])
+				# {"src": "<ID>", "dst": "<ID>", "leader": "<ID>", "type": "fail", "MID": "<a unique string>"}
+				reply = {'src': my_id, 'dst': msg["src"], "leader": currentLeader, 'type': 'fail', "MID": msg["MID"]} 
+				send_msg(reply)
+
+		elif msg['type'] == 'put':
+			'''
+			{"src": "<ID>", 
+			"dst": "<ID>", 
+			"leader": "<ID>", 
+			"type": "put", 
+			"MID": "<a unique string>", 
+			"key": "<some key>", 
+			"value": "<value of the key>"}
+			'''
+			STORE[msg["key"]] = msg["value"]
+			print("put key " + msg["key"] + " into store with value " + msg["value"])
+			reply = {'src': my_id, 'dst': msg["src"], "leader": currentLeader, 'type': 'ok', "MID": msg["MID"]} 
+			send_msg(reply)
+			# TODO IN THE FUTURE ACCOUNT FOR 'TYPE FAIL'
 		
 		elif msg['type'] == "RequestVote":
 			handle_request_vote(msg)
@@ -211,6 +243,9 @@ while True:
 
 		elif msg['type'] == "AppendEntriesResponse":
 			print("handle_append_entries_response(msg)")
+
+		elif msg['type'] == "redirect":
+			print("redirecting to leader")
 
 	clock = time.time()
 
