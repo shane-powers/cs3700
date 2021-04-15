@@ -35,7 +35,7 @@ thisRole = "follower"
 numberOfMachines = len(sys.argv) - 1 # TODO THIS ISNT USED
 electionTimeout = get_random_timeout() 
 lastEvent = time.time() # TODO THIS ISNT USED
-currentLeader = None
+currentLeader = "FFFF"
 STORE = {}
 
 '''
