@@ -20,7 +20,7 @@ def get_random_timeout():
 ############################# PERSISTENT STATE ON ALL SERVERS
 currentTerm = 0
 votedFor = None
-log=[{'term': 0}]
+log=[{'term': 0, "action": None, "value": None}]
 
 ############################# VOLATILE STATE ON ALL SERVERS
 commitIndex = 0
@@ -190,7 +190,21 @@ def handle_redirect(msg):
 	msg = {'src': my_id, 'dst': msg["src"], "leader": currentLeader, 'type': 'redirect', 'MID': msg["MID"]}
 	send_msg(msg)
 
+def echo_get(entries):
+	global currentTerm, my_id, log, commitIndex
+	data = {
+		'term': currentTerm,
+		'leaderId': my_id,
+		'prevLogIndex': len(log) - 1,
+		'prevLogTerm': log[len(log)-1]['term'],
+		'entries': [entries],
+		'leaderCommit': commitIndex
+	}
+	msg = {'src': my_id, 'dst': "None", 'type': 'AppendEntries', "leader": currentLeader, 'data': data}
+	send_to_all(msg)
+
 def handle_get(msg):
+	global commitIndex, log
 	'''
 	{"src": "<ID>", 
 	"dst": "<ID>", 
@@ -201,6 +215,11 @@ def handle_get(msg):
 	'''
 	print(str(my_id) + " received GET request. Is leader? : " + str(currentLeader == my_id))
 	if(thisRole == "leader"):
+		commitIndex += 1
+		newLogEntry = {"term": currentTerm, "action": "GET", "key":msg["key"], "value":None}
+		log.append(newLogEntry)
+		print(str(my_id) + " added " + str(newLogEntry) + "to log, and sent to everyone")
+		echo_get(newLogEntry)
 		print(str(my_id) + " is invoking GET request")
 		response = STORE[msg['key']] # will be a value or 'None'	
 		print("trying to retreive value from key: " + msg["key"])
@@ -217,9 +236,23 @@ def handle_get(msg):
 	else:
 		handle_redirect(msg)
 
+def echo_put(entries):
+	global currentTerm, my_id, log, commitIndex
+	data = {
+		'term': currentTerm,
+		'leaderId': my_id,
+		'prevLogIndex': len(log) - 1,
+		'prevLogTerm': log[len(log)-1]['term'],
+		'entries': [entries],
+		'leaderCommit': commitIndex
+	}
+	msg = {'src': my_id, 'dst': "None", 'type': 'AppendEntries', "leader": currentLeader, 'data': data}
+	send_to_all(msg)
 
 def handle_put(msg):
+	global commitIndex, log
 	'''
+	log=[{'term': 0, "action": None, "value": None}]
 	{"src": "<ID>", 
 	"dst": "<ID>", 
 	"leader": "<ID>", 
@@ -230,6 +263,11 @@ def handle_put(msg):
 	'''
 	print(str(my_id) + " received PUT request. Is leader? : " + str(currentLeader == my_id))
 	if thisRole == "leader":
+		commitIndex += 1
+		newLogEntry = {"term": currentTerm, "action": "PUT", "key":msg["key"], "value":msg["value"]}
+		log.append(newLogEntry)
+		print(str(my_id) + " added " + str(newLogEntry) + "to log, and sent to everyone")
+		echo_put(newLogEntry)
 		print(str(my_id) + " is invoking PUT request")
 		STORE[msg["key"]] = msg["value"]
 		print("put key " + msg["key"] + " into store with value " + msg["value"])
