@@ -108,7 +108,8 @@ def append_entries_rpc(term, leaderId, prevLogIndex, prevLogTerm, entries, leade
 		send_msg(msg)
 		currentLeader = leaderId
 		return
-	#else:
+	else:
+		print("!!!!!!!!!!!!!!!!!!!!!!!!!!! append entries response not sent")
 		# if logs are not equal
 		# TODO
 	if(leaderCommit > commitIndex):
@@ -179,7 +180,7 @@ def handle_append_entries(msg):
 
 def handle_append_entries_response(msg):
 	if(msg["success"] != True):
-		
+		print(str(my_id) + "!!!!!!!!!!!!!!!!!!!!!!!!!!!! BAD APPEND ENTRIES RESPONSE")
 
 def handle_redirect(msg):
 	print(str(my_id) + " is redirecting to client")
