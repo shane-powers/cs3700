@@ -237,7 +237,7 @@ while True:
 
 		elif msg['type'] == "RequestVoteResponse":
 			handle_request_vote_response(msg)
-
+   
 		elif msg['type'] == "AppendEntries":
 			handle_append_entries(msg)
 
@@ -250,14 +250,15 @@ while True:
 	clock = time.time()
 
 	if clock-lastEvent > electionTimeout/2 and thisRole == "leader":
-		sendHeartbeat()
 		lastEvent = clock
+		sendHeartbeat()
+		
 
 	if clock-lastEvent > electionTimeout:
+		lastEvent = clock
 		if thisRole != "leader":
 			begin_election()
-		else:
-			lastEvent = clock
+			
 
 		# # Send a no-op message to a random peer every two seconds, just for fun
 		# # You definitely want to remove this from your implementation
