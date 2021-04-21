@@ -183,6 +183,54 @@ def handle_redirect(msg):
 	msg = {'src': my_id, 'dst': msg["src"], "leader": currentLeader, 'type': 'redirect', 'MID': msg["MID"]}
 	send_msg(msg)
 
+def handle_get(msg):
+	'''
+	{"src": "<ID>", 
+	"dst": "<ID>", 
+	"leader": "<ID>", 
+	"type": "get", 
+	"MID": "<a unique string>", 
+	"key": "<some key>"}
+	'''
+	print(str(my_id) + " received GET request. Is leader? : " + str(currentLeader == my_id))
+	if(thisRole == "leader"):
+		print(str(my_id) + " is invoking GET request")
+		response = STORE[msg['key']] # will be a value or 'None'	
+		print("trying to retreive value from key: " + msg["key"])
+		if response:
+			print("retreived value: " + response + ", from key: " + msg["key"])
+			# {"src": "<ID>", "dst": "<ID>", "leader": "<ID>", "type": "ok", "MID": "<a unique string>", "value": "<value of the key>"}
+			reply = {'src': my_id, 'dst': msg["src"], "leader": currentLeader, 'type': 'ok', "MID": msg["MID"], "value": response} 
+			send_msg(reply)
+		else:
+			print("retreived no value from key: " + msg["key"])
+			# {"src": "<ID>", "dst": "<ID>", "leader": "<ID>", "type": "fail", "MID": "<a unique string>"}
+			reply = {'src': my_id, 'dst': msg["src"], "leader": currentLeader, 'type': 'fail', "MID": msg["MID"]} 
+			send_msg(reply)
+	else:
+		handle_redirect(msg)
+
+
+def handle_put(msg):
+	'''
+	{"src": "<ID>", 
+	"dst": "<ID>", 
+	"leader": "<ID>", 
+	"type": "put", 
+	"MID": "<a unique string>", 
+	"key": "<some key>", 
+	"value": "<value of the key>"}
+	'''
+	print(str(my_id) + " received PUT request. Is leader? : " + str(currentLeader == my_id))
+	if thisRole == "leader":
+		print(str(my_id) + " is invoking PUT request")
+		STORE[msg["key"]] = msg["value"]
+		print("put key " + msg["key"] + " into store with value " + msg["value"])
+		reply = {'src': my_id, 'dst': msg["src"], "leader": currentLeader, 'type': 'ok', "MID": msg["MID"]} 
+		send_msg(reply)
+		# TODO IN THE FUTURE ACCOUNT FOR 'TYPE FAIL'
+	else:
+		handle_redirect(msg)
 # def handle_append_entries_response(msg):
 # 	global thisRole
 # 	goodResponse = {}
@@ -206,46 +254,10 @@ while True:
 		
 		# For now, ignore get() and put() from clients
 		if msg['type'] == 'get':
-			'''
-			{"src": "<ID>", 
-			"dst": "<ID>", 
-			"leader": "<ID>", 
-			"type": "get", 
-			"MID": "<a unique string>", 
-			"key": "<some key>"}
-			'''
-			print("Received get request, is leader? : " + str(currentLeader == my_id))
-
-			response = STORE[msg['key']] # will be a value or 'None'
-			 
-			print("trying to retreive value from key: " + msg["key"])
-			if response:
-				print("retreived value: " + response + ", from key: " + msg["key"])
-				# {"src": "<ID>", "dst": "<ID>", "leader": "<ID>", "type": "ok", "MID": "<a unique string>", "value": "<value of the key>"}
-				reply = {'src': my_id, 'dst': msg["src"], "leader": currentLeader, 'type': 'ok', "MID": msg["MID"], "value": response} 
-				send_msg(reply)
-			else:
-				print("retreived no value from key: " + msg["key"])
-				# {"src": "<ID>", "dst": "<ID>", "leader": "<ID>", "type": "fail", "MID": "<a unique string>"}
-				reply = {'src': my_id, 'dst': msg["src"], "leader": currentLeader, 'type': 'fail', "MID": msg["MID"]} 
-				send_msg(reply)
+			handle_get(msg)
 
 		elif msg['type'] == 'put':
-			'''
-			{"src": "<ID>", 
-			"dst": "<ID>", 
-			"leader": "<ID>", 
-			"type": "put", 
-			"MID": "<a unique string>", 
-			"key": "<some key>", 
-			"value": "<value of the key>"}
-			'''
-			print("Putting data into store, is leader? : " + str(currentLeader == my_id))
-			STORE[msg["key"]] = msg["value"]
-			print("put key " + msg["key"] + " into store with value " + msg["value"])
-			reply = {'src': my_id, 'dst': msg["src"], "leader": currentLeader, 'type': 'ok', "MID": msg["MID"]} 
-			send_msg(reply)
-			# TODO IN THE FUTURE ACCOUNT FOR 'TYPE FAIL'
+			handle_put(msg)
 		
 		elif msg['type'] == "RequestVote":
 			handle_request_vote(msg)
