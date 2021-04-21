@@ -222,12 +222,12 @@ def handle_get(msg):
 		response = STORE[msg['key']] # will be a value or 'None'	
 		#print("trying to retreive value from key: " + msg["key"])
 		if response:
-			print("retreived value: " + response + ", from key: " + msg["key"])
+			#print("retreived value: " + response + ", from key: " + msg["key"])
 			# {"src": "<ID>", "dst": "<ID>", "leader": "<ID>", "type": "ok", "MID": "<a unique string>", "value": "<value of the key>"}
 			reply = {'src': my_id, 'dst': msg["src"], "leader": currentLeader, 'type': 'ok', "MID": msg["MID"], "value": response} 
 			send_msg(reply)
 		else:
-			print("retreived no value from key: " + msg["key"])
+			#print("retreived no value from key: " + msg["key"])
 			# {"src": "<ID>", "dst": "<ID>", "leader": "<ID>", "type": "fail", "MID": "<a unique string>"}
 			reply = {'src': my_id, 'dst': msg["src"], "leader": currentLeader, 'type': 'fail', "MID": msg["MID"]} 
 			send_msg(reply)
