@@ -77,22 +77,26 @@ def request_vote_rpc(term, candidateId, lastLogIndex, lastLogTerm):
 	global currentTerm, votedFor
 	if term < currentTerm:
 		msg = {'src': my_id, 'dst': candidateId, 'type': 'RequestVoteResponse', "leader": currentLeader, 'data': False}
+		print(str(my_id) + " DID NOT VOTE FOR " + str(candidateId))
 		send_msg(msg)
 		return
 	elif votedFor == None or votedFor == candidateId:
 		#grant vote
 		votedFor = candidateId
 		msg = {'src': my_id, 'dst': candidateId, 'type': 'RequestVoteResponse', "leader": currentLeader, 'data': True}
+		print(str(my_id) + " VOTED FOR " + str(candidateId))
 		send_msg(msg)
 		return
 	else:
 		msg = {'src': my_id, 'dst': candidateId, 'type': 'RequestVoteResponse', "leader": currentLeader, 'data': False}
+		print(str(my_id) + " DID NOT VOTE FOR " + str(candidateId))
 		send_msg(msg)
 		return
 
 ############################# APPEND ENTRIES RPC METHOD
 def append_entries_rpc(term, leaderId, prevLogIndex, prevLogTerm, entries, leaderCommit):
 	global log, my_id, lastEvent, currentLeader
+	print(str(my_id) + " RECEIVED APPEND ENTRIES FROM " + str(leaderId))
 	if term < currentTerm or log[prevLogIndex] != prevLogTerm: # TODO CATCH ERROR OUT OF BOUNDS INDEX
 		msg = {'src': my_id, 'dst': leaderId, 'type': 'AppendEntriesResponse', "leader": currentLeader, 'success': False}
 		send_msg(msg)
@@ -147,6 +151,7 @@ def begin_election():
 
 def make_self_leader():
 	global thisRole, currentLeader, receivedVotes
+	print(str(my_id) + " BECAME A LEADER")
 	thisRole = "leader"
 	currentLeader = my_id
 	receivedVotes = []
