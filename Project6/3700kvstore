@@ -95,7 +95,7 @@ def request_vote_rpc(term, candidateId, lastLogIndex, lastLogTerm):
 
 ############################# APPEND ENTRIES RPC METHOD
 def append_entries_rpc(term, leaderId, prevLogIndex, prevLogTerm, entries, leaderCommit):
-	global log, my_id, lastEvent, currentLeader
+	global log, my_id, lastEvent, currentLeader, currentTerm
 	lastEvent = time.time()
 	print(str(my_id) + " RECEIVED APPEND ENTRIES FROM " + str(leaderId))
 	if term < currentTerm or log[prevLogIndex] != prevLogTerm: # TODO CATCH ERROR OUT OF BOUNDS INDEX
