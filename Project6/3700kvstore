@@ -208,7 +208,7 @@ while True:
 			"MID": "<a unique string>", 
 			"key": "<some key>"}
 			'''
-			response = STORE["key"] # will be a value or 'None'
+			response = STORE[msg['key']] # will be a value or 'None'
 			print("trying to retreive value from key: " + msg["key"])
 			if response:
 				print("retreived value: " + response + ", from key: " + msg["key"])
