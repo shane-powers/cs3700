@@ -98,20 +98,20 @@ def append_entries_rpc(term, leaderId, prevLogIndex, prevLogTerm, entries, leade
 	global log, my_id, lastEvent, currentLeader, currentTerm
 	lastEvent = time.time()
 	print(str(my_id) + " RECEIVED APPEND ENTRIES FROM " + str(leaderId))
-	if term < currentTerm or log[prevLogIndex] != prevLogTerm: # TODO CATCH ERROR OUT OF BOUNDS INDEX
+	if term < currentTerm# or log[prevLogIndex] != prevLogTerm: # TODO CATCH ERROR OUT OF BOUNDS INDEX
 		msg = {'src': my_id, 'dst': leaderId, 'type': 'AppendEntriesResponse', "leader": currentLeader, 'success': False}
 		send_msg(msg)
 		return
 	
-	if log[prevLogIndex] == prevLogTerm: # TODO CATCH ERROR OUT OF BOUNDS INDEX
+	else log[prevLogIndex] == prevLogTerm: # TODO CATCH ERROR OUT OF BOUNDS INDEX
 		msg = {'src': my_id, 'dst': leaderId, 'type': 'AppendEntriesResponse', "leader": currentLeader, 'success': True}
 		send_msg(msg)
 		currentLeader = leaderId
 		return
-	else:
-		print("!!!!!!!!!!!!!!!!!!!!!!!!!!! append entries response not sent")
-		# if logs are not equal
-		# TODO
+	# else:
+	# 	print("!!!!!!!!!!!!!!!!!!!!!!!!!!! append entries response not sent")
+	# 	# if logs are not equal
+	# 	# TODO
 	if(leaderCommit > commitIndex):
 		commitIndex = min(leaderCommit, len(log)-1)
 
@@ -181,6 +181,8 @@ def handle_append_entries(msg):
 def handle_append_entries_response(msg):
 	if(msg["success"] != True):
 		print(str(my_id) + " received !!!!!!!!!!!!!!!!!!!!!!!!!!!! BAD APPEND ENTRIES RESPONSE FROM " + str(msg["src"]))
+	else:
+		print(str(my_id) + " received GOOD APPEND ENTRIES RESPONSE FROM " + str(msg["src"]))
 
 def handle_redirect(msg):
 	print(str(my_id) + " is redirecting to client")
