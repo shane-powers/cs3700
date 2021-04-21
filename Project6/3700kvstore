@@ -177,6 +177,10 @@ def handle_append_entries(msg):
 	data = msg['data']
 	append_entries_rpc(data["term"], data["leaderId"], data["prevLogIndex"], data["prevLogTerm"], data["entries"], data["leaderCommit"])
 
+def handle_append_entries_response(msg):
+	if(msg["success"] != True):
+		
+
 def handle_redirect(msg):
 	print(str(my_id) + " is redirecting to client")
 	#{"src": "<ID>", "dst": "<ID>", "leader": "<ID>", "type": "redirect", "MID": "<a unique string>"}
@@ -269,7 +273,8 @@ while True:
 			handle_append_entries(msg)
 
 		elif msg['type'] == "AppendEntriesResponse":
-			print(str(my_id) + " RECEIVED APPEND ENTRIES RESPONSE")
+			print(str(my_id) + " RECEIVED APPEND ENTRIES RESPONSE: SUCCESS? -> " + str(msg["success"]))
+			handle_append_entries_response(msg)
 
 	clock = time.time()
 
