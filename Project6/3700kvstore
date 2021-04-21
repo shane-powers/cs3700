@@ -96,6 +96,7 @@ def request_vote_rpc(term, candidateId, lastLogIndex, lastLogTerm):
 ############################# APPEND ENTRIES RPC METHOD
 def append_entries_rpc(term, leaderId, prevLogIndex, prevLogTerm, entries, leaderCommit):
 	global log, my_id, lastEvent, currentLeader
+	lastEvent = time.time()
 	print(str(my_id) + " RECEIVED APPEND ENTRIES FROM " + str(leaderId))
 	if term < currentTerm or log[prevLogIndex] != prevLogTerm: # TODO CATCH ERROR OUT OF BOUNDS INDEX
 		msg = {'src': my_id, 'dst': leaderId, 'type': 'AppendEntriesResponse', "leader": currentLeader, 'success': False}
@@ -106,7 +107,6 @@ def append_entries_rpc(term, leaderId, prevLogIndex, prevLogTerm, entries, leade
 		msg = {'src': my_id, 'dst': leaderId, 'type': 'AppendEntriesResponse', "leader": currentLeader, 'success': True}
 		send_msg(msg)
 		currentLeader = leaderId
-		lastEvent = time.time()
 		return
 	#else:
 		# if logs are not equal
@@ -247,7 +247,7 @@ while True:
 			handle_append_entries(msg)
 
 		elif msg['type'] == "AppendEntriesResponse":
-			print("handle_append_entries_response(msg)")
+			print(str(my_id) + " RECEIVED APPEND ENTRIES RESPONSE")
 
 		elif msg['type'] == "redirect":
 			print("redirecting to leader")
