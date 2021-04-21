@@ -180,7 +180,7 @@ def handle_append_entries(msg):
 
 def handle_append_entries_response(msg):
 	if(msg["success"] != True):
-		print(str(my_id) + "!!!!!!!!!!!!!!!!!!!!!!!!!!!! BAD APPEND ENTRIES RESPONSE")
+		print(str(my_id) + " received !!!!!!!!!!!!!!!!!!!!!!!!!!!! BAD APPEND ENTRIES RESPONSE FROM " + str(msg["src"]))
 
 def handle_redirect(msg):
 	print(str(my_id) + " is redirecting to client")
