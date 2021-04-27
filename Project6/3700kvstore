@@ -20,7 +20,7 @@ def get_random_timeout():
 ############################# PERSISTENT STATE ON ALL SERVERS
 currentTerm = 0
 votedFor = None
-log=[{'term': 0, "action": None, "value": None}]
+log=[{'term': 0, "action": None, "value": None, "key":None}]
 
 ############################# VOLATILE STATE ON ALL SERVERS
 commitIndex = 0
@@ -103,7 +103,7 @@ def append_entries_rpc(term, leaderId, prevLogIndex, prevLogTerm, entries, leade
 		return
 	log = leaderLog
 	for entry in log:
-		if entry["key"] not in STORE:
+		if entry["key"] != None and entry["key"] not in STORE:
 			STORE[entry["key"]] == entry["value"]
 			msg = {'src': my_id, 'dst': leaderId, 'type': 'AppendEntriesResponse', "leader": currentLeader, 'success': True}
 			send_msg(msg)
