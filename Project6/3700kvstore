@@ -15,7 +15,7 @@ sock.connect(my_id)
 
 def get_random_timeout():
 	#Return value between 150 and 300 ms
-	return random.uniform(1, 3)
+	return random.uniform(.3, .8)
 
 ############################# PERSISTENT STATE ON ALL SERVERS
 currentTerm = 0
@@ -94,26 +94,38 @@ def request_vote_rpc(term, candidateId, lastLogIndex, lastLogTerm):
 		return
 
 ############################# APPEND ENTRIES RPC METHOD
-def append_entries_rpc(term, leaderId, prevLogIndex, prevLogTerm, entries, leaderCommit):
+def append_entries_rpc(term, leaderId, prevLogIndex, prevLogTerm, entries, leaderCommit, leaderLog):
 	global log, my_id, lastEvent, currentLeader, currentTerm
 	lastEvent = time.time()
 	#print(str(my_id) + " RECEIVED APPEND ENTRIES FROM " + str(leaderId))
-	if term < currentTerm: # or log[prevLogIndex] != prevLogTerm: # TODO CATCH ERROR OUT OF BOUNDS INDEX
-		msg = {'src': my_id, 'dst': leaderId, 'type': 'AppendEntriesResponse', "leader": currentLeader, 'success': False}
-		send_msg(msg)
+	if term < currentTerm: 
+		make_self_leader()
 		return
+	log = leaderLog
+	for entry in log:
+		if entry["key"] not in STORE:
+			STORE[entry["key"]] == entry["value"]
+			msg = {'src': my_id, 'dst': leaderId, 'type': 'AppendEntriesResponse', "leader": currentLeader, 'success': True}
+			send_msg(msg)
 	
-	else: #log[prevLogIndex] == prevLogTerm: # TODO CATCH ERROR OUT OF BOUNDS INDEX
-		msg = {'src': my_id, 'dst': leaderId, 'type': 'AppendEntriesResponse', "leader": currentLeader, 'success': True}
-		send_msg(msg)
-		currentLeader = leaderId
-		return
+	# 	return
+	# if prevLogIndex < len(log):
+	# 	if log[prevLogIndex] != prevLogTerm: # TODO CATCH ERROR OUT OF BOUNDS INDEX
+
+	# 		msg = {'src': my_id, 'dst': leaderId, 'type': 'AppendEntriesResponse', "leader": currentLeader, 'success': False}
+	# 		send_msg(msg)
+	# 		currentLeader = leaderId
+	# 		return
 	# else:
+	# 	msg = {'src': my_id, 'dst': leaderId, 'type': 'AppendEntriesResponse', "leader": currentLeader, 'success': True}
+	# 	send_msg(msg)
+	# 	currentLeader = leaderId
+	# 	return
 	# 	print("!!!!!!!!!!!!!!!!!!!!!!!!!!! append entries response not sent")
 	# 	# if logs are not equal
 	# 	# TODO
-	if(leaderCommit > commitIndex):
-		commitIndex = min(leaderCommit, len(log)-1)
+	# if(leaderCommit > commitIndex):
+	# 	commitIndex = min(leaderCommit, len(log)-1)
 
 ############################# STATE TRANSITION METHODS
 receivedVotes = []
@@ -126,7 +138,8 @@ def sendHeartbeat():
 		'prevLogIndex': len(log) - 1,
 		'prevLogTerm': log[len(log)-1]['term'],
 		'entries': [],
-		'leaderCommit': commitIndex
+		'leaderCommit': commitIndex,
+		'leaderLog': log
 	}
 	msg = {'src': my_id, 'dst': "None", 'type': 'AppendEntries', "leader": currentLeader, 'data': data}
 	send_to_all(msg)
@@ -176,11 +189,11 @@ def handle_append_entries(msg):
 	if thisRole != "follower":
 		thisRole = "follower"
 	data = msg['data']
-	append_entries_rpc(data["term"], data["leaderId"], data["prevLogIndex"], data["prevLogTerm"], data["entries"], data["leaderCommit"])
+	append_entries_rpc(data["term"], data["leaderId"], data["prevLogIndex"], data["prevLogTerm"], data["entries"], data["leaderCommit"], data['leaderLog'])
 
 def handle_append_entries_response(msg):
-	if(msg["success"] != True):
-		print(str(my_id) + " received !!!!!!!!!!!!!!!!!!!!!!!!!!!! BAD APPEND ENTRIES RESPONSE FROM " + str(msg["src"]))
+	if msg["success"] != True:
+		print("how did you get here")
 
 def handle_redirect(msg):
 	#print(str(my_id) + " is redirecting to client")
@@ -188,18 +201,18 @@ def handle_redirect(msg):
 	msg = {'src': my_id, 'dst': msg["src"], "leader": currentLeader, 'type': 'redirect', 'MID': msg["MID"]}
 	send_msg(msg)
 
-def echo_get(entries):
-	global currentTerm, my_id, log, commitIndex
-	data = {
-		'term': currentTerm,
-		'leaderId': my_id,
-		'prevLogIndex': len(log) - 1,
-		'prevLogTerm': log[len(log)-1]['term'],
-		'entries': [entries],
-		'leaderCommit': commitIndex
-	}
-	msg = {'src': my_id, 'dst': "None", 'type': 'AppendEntries', "leader": currentLeader, 'data': data}
-	#send_to_all(msg)
+# def echo_get(entries):
+# 	global currentTerm, my_id, log, commitIndex
+# 	data = {
+# 		'term': currentTerm,
+# 		'leaderId': my_id,
+# 		'prevLogIndex': len(log) - 1,
+# 		'prevLogTerm': log[len(log)-1]['term'],
+# 		'entries': [entries],
+# 		'leaderCommit': commitIndex
+# 	}
+# 	msg = {'src': my_id, 'dst': "None", 'type': 'AppendEntries', "leader": currentLeader, 'data': data}
+# 	#send_to_all(msg)
 
 def handle_get(msg):
 	global commitIndex, log
@@ -217,7 +230,6 @@ def handle_get(msg):
 		newLogEntry = {"term": currentTerm, "action": "GET", "key":msg["key"], "value":None}
 		log.append(newLogEntry)
 		#print(str(my_id) + " added " + str(newLogEntry) + "to log, and sent to everyone")
-		echo_get(newLogEntry)
 		#print(str(my_id) + " is invoking GET request")
 		response = STORE[msg['key']] # will be a value or 'None'	
 		#print("trying to retreive value from key: " + msg["key"])
@@ -242,7 +254,8 @@ def echo_put(entries):
 		'prevLogIndex': len(log) - 1,
 		'prevLogTerm': log[len(log)-1]['term'],
 		'entries': [entries],
-		'leaderCommit': commitIndex
+		'leaderCommit': commitIndex,
+		'leaderLog': log
 	}
 	msg = {'src': my_id, 'dst': "None", 'type': 'AppendEntries', "leader": currentLeader, 'data': data}
 	send_to_all(msg)
