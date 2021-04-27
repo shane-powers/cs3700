@@ -94,26 +94,36 @@ def request_vote_rpc(term, candidateId, lastLogIndex, lastLogTerm):
 		return
 
 ############################# APPEND ENTRIES RPC METHOD
-def append_entries_rpc(term, leaderId, prevLogIndex, prevLogTerm, entries, leaderCommit):
-	global log, my_id, lastEvent, currentLeader, currentTerm
+def append_entries_rpc(term, leaderId, prevLogIndex, prevLogTerm, entry, leaderCommit):
+	global log, my_id, lastEvent, currentLeader, currentTerm, commitIndex, STORE
 	lastEvent = time.time()
+	currentLeader = leaderId
 	#print(str(my_id) + " RECEIVED APPEND ENTRIES FROM " + str(leaderId))
-	if term < currentTerm: # or log[prevLogIndex] != prevLogTerm: # TODO CATCH ERROR OUT OF BOUNDS INDEX
-		msg = {'src': my_id, 'dst': leaderId, 'type': 'AppendEntriesResponse', "leader": currentLeader, 'success': False}
+	if term < currentTerm: 
+		#Potentially nominate self for election
+		make_self_leader()
+		return
+	elif len(log) - 1 != prevLogIndex:
+		# Follower is multiple log entries behind leader
+		msg = {'src': my_id, 'dst': leaderId, 'type': 'AppendEntriesResponse', "leader": currentLeader, 'success': False, "lastKnownIndex": len(log) - 1}
+		send_msg(msg)
+		# TODO we need the leader to back one entry up and send to the follower again
+		return
+	elif log[prevLogIndex] != prevLogTerm:
+		# Follower's most recent entry is not equal to leader's most recent entry
+		# Delete entry and all that follow it
+		log = log[:prevLogIndex]
+		return append_entries_rpc(term, leaderId, prevLogIndex, prevLogTerm, entry, leaderCommit)
+	else: 
+		# Follower is up to speed, append the new entry to the followers log and give the leader a success message
+		# entry = [{"term": currentTerm, "action": "PUT", "key":msg["key"], "value":msg["value"]}]
+		for e in entry:
+			STORE[e["key"]] = e["value"]
+			log.append(e)
+			commitIndex += 1
+		msg = {'src': my_id, 'dst': leaderId, 'type': 'AppendEntriesResponse', "leader": currentLeader, 'success': True, "lastKnownIndex": len(log) - 1}
 		send_msg(msg)
 		return
-	
-	else: #log[prevLogIndex] == prevLogTerm: # TODO CATCH ERROR OUT OF BOUNDS INDEX
-		msg = {'src': my_id, 'dst': leaderId, 'type': 'AppendEntriesResponse', "leader": currentLeader, 'success': True}
-		send_msg(msg)
-		currentLeader = leaderId
-		return
-	# else:
-	# 	print("!!!!!!!!!!!!!!!!!!!!!!!!!!! append entries response not sent")
-	# 	# if logs are not equal
-	# 	# TODO
-	if(leaderCommit > commitIndex):
-		commitIndex = min(leaderCommit, len(log)-1)
 
 ############################# STATE TRANSITION METHODS
 receivedVotes = []
@@ -179,8 +189,27 @@ def handle_append_entries(msg):
 	append_entries_rpc(data["term"], data["leaderId"], data["prevLogIndex"], data["prevLogTerm"], data["entries"], data["leaderCommit"])
 
 def handle_append_entries_response(msg):
-	if(msg["success"] != True):
-		print(str(my_id) + " received !!!!!!!!!!!!!!!!!!!!!!!!!!!! BAD APPEND ENTRIES RESPONSE FROM " + str(msg["src"]))
+	# msg = {'src': my_id, 'dst': leaderId, 'type': 'AppendEntriesResponse', "leader": currentLeader, 'success': True | False, "lastKnownIndex": len(log) - 1}
+	if msg["lastKnownIndex"] != len(log) - 1:
+		# follower is behind, resent with decremented log values
+		followersIndex = msg["lastKnownIndex"] 
+		# {"term": currentTerm, "action": "GET", "key":msg["key"], "value":None}
+		if followersIndex + 1 < len(log):
+			data = {
+			'term': log[followersIndex + 1]["term"],
+			'leaderId': my_id,
+			'prevLogIndex': followersIndex,
+			'prevLogTerm': log[followersIndex]["term"],
+			'entries': [log[followersIndex + 1]], # be careful might be out of range
+			'leaderCommit': commitIndex
+			}
+			msg = {'src': my_id, 'dst': msg["src"], 'type': 'AppendEntries', "leader": currentLeader, 'data': data}
+			send_msg(msg)
+
+
+		
+	#else:	
+		# follower successfully appended their log with what we sent
 
 def handle_redirect(msg):
 	#print(str(my_id) + " is redirecting to client")
@@ -188,18 +217,18 @@ def handle_redirect(msg):
 	msg = {'src': my_id, 'dst': msg["src"], "leader": currentLeader, 'type': 'redirect', 'MID': msg["MID"]}
 	send_msg(msg)
 
-def echo_get(entries):
-	global currentTerm, my_id, log, commitIndex
-	data = {
-		'term': currentTerm,
-		'leaderId': my_id,
-		'prevLogIndex': len(log) - 1,
-		'prevLogTerm': log[len(log)-1]['term'],
-		'entries': [entries],
-		'leaderCommit': commitIndex
-	}
-	msg = {'src': my_id, 'dst': "None", 'type': 'AppendEntries', "leader": currentLeader, 'data': data}
-	#send_to_all(msg)
+# def echo_get(entries):
+# 	global currentTerm, my_id, log, commitIndex
+# 	data = {
+# 		'term': currentTerm,
+# 		'leaderId': my_id,
+# 		'prevLogIndex': len(log) - 1,
+# 		'prevLogTerm': log[len(log)-1]['term'],
+# 		'entries': [entries],
+# 		'leaderCommit': commitIndex
+# 	}
+# 	msg = {'src': my_id, 'dst': "None", 'type': 'AppendEntries', "leader": currentLeader, 'data': data}
+# 	#send_to_all(msg)
 
 def handle_get(msg):
 	global commitIndex, log
@@ -213,11 +242,11 @@ def handle_get(msg):
 	'''
 	#print(str(my_id) + " received GET request. Is leader? : " + str(currentLeader == my_id))
 	if(thisRole == "leader"):
-		commitIndex += 1
-		newLogEntry = {"term": currentTerm, "action": "GET", "key":msg["key"], "value":None}
-		log.append(newLogEntry)
+		#commitIndex += 1
+		#newLogEntry = {"term": currentTerm, "action": "GET", "key":msg["key"], "value":None}
+		#log.append(newLogEntry)
 		#print(str(my_id) + " added " + str(newLogEntry) + "to log, and sent to everyone")
-		echo_get(newLogEntry)
+		#echo_get(newLogEntry)
 		#print(str(my_id) + " is invoking GET request")
 		response = STORE[msg['key']] # will be a value or 'None'	
 		#print("trying to retreive value from key: " + msg["key"])
@@ -234,14 +263,14 @@ def handle_get(msg):
 	else:
 		handle_redirect(msg)
 
-def echo_put(entries):
+def echo_put(entry):
 	global currentTerm, my_id, log, commitIndex
 	data = {
 		'term': currentTerm,
 		'leaderId': my_id,
 		'prevLogIndex': len(log) - 1,
 		'prevLogTerm': log[len(log)-1]['term'],
-		'entries': [entries],
+		'entries': [entry],
 		'leaderCommit': commitIndex
 	}
 	msg = {'src': my_id, 'dst': "None", 'type': 'AppendEntries', "leader": currentLeader, 'data': data}
