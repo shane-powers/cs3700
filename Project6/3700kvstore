@@ -94,7 +94,7 @@ def request_vote_rpc(term, candidateId, lastLogIndex, lastLogTerm):
 		return
 
 ############################# APPEND ENTRIES RPC METHOD
-def append_entries_rpc(term, leaderId, prevLogIndex, prevLogTerm, entry, leaderCommit):
+def append_entries_rpc(term, leaderId, prevLogIndex, prevLogEntry, entry, leaderCommit):
 	global log, my_id, lastEvent, currentLeader, currentTerm, commitIndex, STORE
 	lastEvent = time.time()
 	currentLeader = leaderId
@@ -103,17 +103,17 @@ def append_entries_rpc(term, leaderId, prevLogIndex, prevLogTerm, entry, leaderC
 		#Potentially nominate self for election
 		make_self_leader()
 		return
-	elif len(log) - 1 != prevLogIndex:
+	elif len(log) - 1 < prevLogIndex:
 		# Follower is multiple log entries behind leader
 		msg = {'src': my_id, 'dst': leaderId, 'type': 'AppendEntriesResponse', "leader": currentLeader, 'success': False, "lastKnownIndex": len(log) - 1}
 		send_msg(msg)
 		# TODO we need the leader to back one entry up and send to the follower again
 		return
-	elif log[prevLogIndex] != prevLogTerm:
+	elif log[prevLogIndex] != prevLogEntry:
 		# Follower's most recent entry is not equal to leader's most recent entry
 		# Delete entry and all that follow it
 		log = log[:prevLogIndex]
-		return append_entries_rpc(term, leaderId, prevLogIndex, prevLogTerm, entry, leaderCommit)
+		return append_entries_rpc(term, leaderId, prevLogIndex, prevLogEntry, entry, leaderCommit)
 	else: 
 		# Follower is up to speed, append the new entry to the followers log and give the leader a success message
 		# entry = [{"term": currentTerm, "action": "PUT", "key":msg["key"], "value":msg["value"]}]
@@ -134,7 +134,7 @@ def sendHeartbeat():
 		'term': currentTerm,
 		'leaderId': my_id,
 		'prevLogIndex': len(log) - 1,
-		'prevLogTerm': log[len(log)-1]['term'],
+		'prevLogEntry': log[len(log)-1],
 		'entries': [],
 		'leaderCommit': commitIndex
 	}
@@ -186,7 +186,7 @@ def handle_append_entries(msg):
 	if thisRole != "follower":
 		thisRole = "follower"
 	data = msg['data']
-	append_entries_rpc(data["term"], data["leaderId"], data["prevLogIndex"], data["prevLogTerm"], data["entries"], data["leaderCommit"])
+	append_entries_rpc(data["term"], data["leaderId"], data["prevLogIndex"], data["prevLogEntry"], data["entries"], data["leaderCommit"])
 
 def handle_append_entries_response(msg):
 	# msg = {'src': my_id, 'dst': leaderId, 'type': 'AppendEntriesResponse', "leader": currentLeader, 'success': True | False, "lastKnownIndex": len(log) - 1}
@@ -199,7 +199,7 @@ def handle_append_entries_response(msg):
 			'term': log[followersIndex + 1]["term"],
 			'leaderId': my_id,
 			'prevLogIndex': followersIndex,
-			'prevLogTerm': log[followersIndex]["term"],
+			'prevLogEntry': log[followersIndex],
 			'entries': [log[followersIndex + 1]], # be careful might be out of range
 			'leaderCommit': commitIndex
 			}
@@ -269,7 +269,7 @@ def echo_put(entry):
 		'term': currentTerm,
 		'leaderId': my_id,
 		'prevLogIndex': len(log) - 1,
-		'prevLogTerm': log[len(log)-1]['term'],
+		'prevLogEntry': log[len(log)-1],
 		'entries': [entry],
 		'leaderCommit': commitIndex
 	}
