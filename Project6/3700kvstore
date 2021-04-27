@@ -190,8 +190,8 @@ def handle_append_entries(msg):
 
 def handle_append_entries_response(msg):
 	# msg = {'src': my_id, 'dst': leaderId, 'type': 'AppendEntriesResponse', "leader": currentLeader, 'success': True | False, "lastKnownIndex": len(log) - 1}
-	if msg["lastKnownIndex"] != len(log) - 1:
-		# follower is behind, resent with decremented log values
+	if msg["lastKnownIndex"] < len(log) - 1:
+		# follower is behind, resend with decremented log values
 		followersIndex = msg["lastKnownIndex"] 
 		# {"term": currentTerm, "action": "GET", "key":msg["key"], "value":None}
 		if followersIndex + 1 < len(log):
@@ -268,8 +268,8 @@ def echo_put(entry):
 	data = {
 		'term': currentTerm,
 		'leaderId': my_id,
-		'prevLogIndex': len(log) - 1,
-		'prevLogEntry': log[len(log)-1],
+		'prevLogIndex': len(log) - 2,
+		'prevLogEntry': log[len(log) - 2],
 		'entries': [entry],
 		'leaderCommit': commitIndex
 	}
