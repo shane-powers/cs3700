@@ -273,7 +273,7 @@ def send_append_entries_for_replica(rid):
 	if next_index_dict[rid] >= len(log):
 		entries = []
 	else:
-		entries = log[next_index_dict[rid]:]
+		entries = [log[next_index_dict + 1]]
 
 	data = {
 		'term': currentTerm,
