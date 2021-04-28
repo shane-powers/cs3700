@@ -139,18 +139,8 @@ def append_entries_rpc(term, leaderId, prevLogIndex, prevLogTerm, entries, leade
 receivedVotes = []
 
 def sendHeartbeat():
-	global currentTerm, my_id, log, commitIndex
-	data = {
-		'term': currentTerm,
-		'leaderId': my_id,
-		'prevLogIndex': len(log) - 1,
-		'prevLogTerm': log[len(log)-1]['term'],
-		'entries': [],
-		'leaderCommit': commitIndex,
-		'leaderLog': log
-	}
-	msg = {'src': my_id, 'dst': "None", 'type': 'AppendEntries', "leader": currentLeader, 'data': data}
-	send_to_all(msg)
+	for rid in replica_ids:
+		send_append_entries_for_replica(rid)
 
 def begin_election():
 	global votedFor, currentTerm, thisRole, receivedVotes
@@ -314,7 +304,8 @@ def handle_put(msg):
 		newLogEntry = {"term": currentTerm, "action": "PUT", "key":msg["key"], "value":msg["value"]}
 		log.append(newLogEntry)
 		#print(str(my_id) + " added " + str(newLogEntry) + "to log, and sent to everyone")
-		echo_put(newLogEntry)
+		for rid in replica_ids:
+			send_append_entries_for_replica(rid)
 		#print(str(my_id) + " is invoking PUT request")
 		STORE[msg["key"]] = msg["value"]
 		#print("put key " + msg["key"] + " into store with value " + msg["value"])
