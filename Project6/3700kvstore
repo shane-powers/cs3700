@@ -100,7 +100,7 @@ def append_entries_rpc(term, leaderId, prevLogIndex, prevLogTerm, entries, leade
 	lastEvent = time.time()
 	#print(str(my_id) + " RECEIVED APPEND ENTRIES FROM " + str(leaderId))
 	if prevLogIndex >= len(log) or term < currentTerm or prevLogTerm != log[prevLogIndex]["term"]: 
-		resp_msg = {'type': "AppendEntriesResponse",'term': currentTerm, 'success': False, 'nextIndex': commitIndex}
+		resp_msg = {'src':my_id,'dst':leaderId,'leader':leaderId,'type': "AppendEntriesResponse",'term': currentTerm, 'success': False, 'nextIndex': commitIndex}
 		send_msg(resp_msg)
 	
 	else:
@@ -112,7 +112,7 @@ def append_entries_rpc(term, leaderId, prevLogIndex, prevLogTerm, entries, leade
 				 log.append(entry)
 				 if entry["key"] not in STORE:
 					 STORE[entry["key"]] = entry["value"]
-		resp_msg = {'type': "AppendEntriesResponse",'term': currentTerm, 'success': True, 'nextIndex': len(log)}
+		resp_msg = {'src':my_id,'dst':leaderId,'leader':leaderId,'type': "AppendEntriesResponse",'term': currentTerm, 'success': True, 'nextIndex': len(log)}
 		send_msg(resp_msg)
 			
 	
