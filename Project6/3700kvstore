@@ -95,7 +95,7 @@ def request_vote_rpc(term, candidateId, lastLogIndex, lastLogTerm):
 		return
 
 ############################# APPEND ENTRIES RPC METHOD
-def append_entries_rpc(term, leaderId, prevLogIndex, prevLogTerm, entries, leaderCommit, leaderLog):
+def append_entries_rpc(term, leaderId, prevLogIndex, prevLogTerm, entries, leaderCommit):
 	global log, my_id, lastEvent, currentLeader, currentTerm
 	lastEvent = time.time()
 	#print(str(my_id) + " RECEIVED APPEND ENTRIES FROM " + str(leaderId))
@@ -189,7 +189,7 @@ def handle_append_entries(msg):
 	if thisRole != "follower":
 		thisRole = "follower"
 	data = msg['data']
-	append_entries_rpc(data["term"], data["leaderId"], data["prevLogIndex"], data["prevLogTerm"], data["entries"], data["leaderCommit"], data['leaderLog'])
+	append_entries_rpc(data["term"], data["leaderId"], data["prevLogIndex"], data["prevLogTerm"], data["entries"], data["leaderCommit"])
 
 def handle_append_entries_response(msg):
 	if currentTerm < msg['term']:
@@ -252,19 +252,19 @@ def handle_get(msg):
 	else:
 		handle_redirect(msg)
 
-def echo_put(entries):
-	global currentTerm, my_id, log, commitIndex
-	data = {
-		'term': currentTerm,
-		'leaderId': my_id,
-		'prevLogIndex': len(log) - 1,
-		'prevLogTerm': log[len(log)-1]['term'],
-		'entries': [entries],
-		'leaderCommit': commitIndex,
-		'leaderLog': log
-	}
-	msg = {'src': my_id, 'dst': "None", 'type': 'AppendEntries', "leader": currentLeader, 'data': data}
-	send_to_all(msg)
+# def echo_put(entries):
+# 	global currentTerm, my_id, log, commitIndex
+# 	data = {
+# 		'term': currentTerm,
+# 		'leaderId': my_id,
+# 		'prevLogIndex': len(log) - 1,
+# 		'prevLogTerm': log[len(log)-1]['term'],
+# 		'entries': [entries],
+# 		'leaderCommit': commitIndex,
+# 		'leaderLog': log
+# 	}
+# 	msg = {'src': my_id, 'dst': "None", 'type': 'AppendEntries', "leader": currentLeader, 'data': data}
+# 	send_to_all(msg)
 
 def send_append_entries_for_replica(rid):
 	global currentTerm, my_id, log, commitIndex
