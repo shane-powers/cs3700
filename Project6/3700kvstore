@@ -209,7 +209,7 @@ def handle_append_entries_response(msg):
 		next_index_dict[msg["src"]] = msg["nextIndex"]
 	elif msg['success'] == True:
 		#success true
-		nextIndex[msg["src"]] = min(len(log), msg["nextIndex"])
+		next_index_dict[msg["src"]] = min(len(log), msg["nextIndex"])
 
 def handle_redirect(msg):
 	#print(str(my_id) + " is redirecting to client")
