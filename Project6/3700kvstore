@@ -57,7 +57,7 @@ def request_vote_rpc(term, candidateId, lastLogIndex, lastLogTerm):
 		msg = {'src': my_id, 'dst': candidateId, 'type': 'RequestVoteResponse', "leader": currentLeader, 'data': False}
 		send_msg(msg)
 		return
-	elif votedFor == None or votedFor == candidateId:
+	elif votedFor == None or votedFor == candidateId or term > currentTerm:
 		#grant vote
 		votedFor = candidateId
 		msg = {'src': my_id, 'dst': candidateId, 'type': 'RequestVoteResponse', "leader": currentLeader, 'data': True}
@@ -84,6 +84,7 @@ def append_entries_rpc(term, leaderId, prevLogIndex, prevLogTerm, entries, leade
 		msg = {'src': my_id, 'dst': leaderId, 'type': 'AppendEntriesResponse', "leader": currentLeader, 'success': True}
 		send_msg(msg)
 		currentLeader = leaderId
+		currentTerm = msg["term"]
 		return
 	if(leaderCommit > commitIndex):
 		commitIndex = min(leaderCommit, len(log)-1)
@@ -112,7 +113,7 @@ def begin_election():
 	#Change role to candidate
 	thisRole = "candidate"
 	#issues request vote to each of other servers
-	print(str(my_id) + " BECAME A CANDIDATE AND STARTED AN ELECTION")
+	print(str(my_id) + " BECAME A CANDIDATE AND INCREASED ITS TERM. CURRENT TERM: " + str(currentTerm))
 	votedFor = my_id
 	data = {
 		'term': currentTerm,
@@ -246,5 +247,5 @@ while True:
 
 	if clock-lastEvent > electionTimeout:
 		lastEvent = clock
-		if thisRole == "follower":
+		if thisRole != "leader":
 			begin_election()
