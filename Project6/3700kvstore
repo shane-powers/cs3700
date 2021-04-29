@@ -15,7 +15,7 @@ sock.connect(my_id)
 
 def get_random_timeout():
 	#Return value between 150 and 300 ms
-	return random.uniform(.2, 1)
+	return random.uniform(.6, 1)
 
 ############################# PERSISTENT STATE ON ALL SERVERS
 currentTerm = 0
