@@ -77,7 +77,7 @@ def send_to_all(msg):
 def request_vote_rpc(term, candidateId, lastLogIndex, lastLogTerm):
 	global currentTerm, votedFor
 	if term < currentTerm:
-		msg = {'src': my_id, 'dst': candidateId, 'type': 'RequestVoteResponse', "leader": currentLeader, 'data': False}
+		msg = {'src': my_id, 'dst': candidateId, 'type': 'RequestVoteResponse', "leader": currentLeader,'term':currentTerm, 'data': False}
 		#print(str(my_id) + " DID NOT VOTE FOR " + str(candidateId))
 		send_msg(msg)
 		return
@@ -85,13 +85,13 @@ def request_vote_rpc(term, candidateId, lastLogIndex, lastLogTerm):
 		#grant vote
 		currentTerm = term
 		votedFor = candidateId
-		msg = {'src': my_id, 'dst': candidateId, 'type': 'RequestVoteResponse', "leader": currentLeader, 'data': True}
+		msg = {'src': my_id, 'dst': candidateId, 'type': 'RequestVoteResponse', "leader": currentLeader,'term':currentTerm, 'data': True}
 		#print(str(my_id) + " VOTED FOR " + str(candidateId))
 		send_msg(msg)
 		return
 	else:
 		currentTerm = term
-		msg = {'src': my_id, 'dst': candidateId, 'type': 'RequestVoteResponse', "leader": currentLeader, 'data': False}
+		msg = {'src': my_id, 'dst': candidateId, 'type': 'RequestVoteResponse', "leader": currentLeader,'term':currentTerm, 'data': False}
 		#print(str(my_id) + " DID NOT VOTE FOR " + str(candidateId))
 		send_msg(msg)
 		return
@@ -188,7 +188,7 @@ def handle_request_vote(msg):
 	request_vote_rpc(data['term'], data['candidateId'], data['lastLogIndex'], data['lastLogTerm'])
 	
 def handle_request_vote_response(msg):
-	global thisRole, receivedVotes
+	global thisRole, receivedVotes, currentTerm
 	if thisRole == "candidate" and msg['dst'] == my_id:
 		if msg['data'] == True:
 			receivedVotes.append(msg['src'])
@@ -214,6 +214,7 @@ def handle_append_entries(msg):
 	append_entries_rpc(data["term"], data["leaderId"], data["prevLogIndex"], data["prevLogTerm"], data["entries"], data["leaderCommit"])
 
 def handle_append_entries_response(msg):
+	global currentTerm, next_index_dict, currentLeader
 	if thisRole == "leader":
 		if currentTerm < msg['term']:
 			give_up_leader(msg['term'], msg["leader"])
@@ -313,7 +314,7 @@ def send_append_entries_for_replica(rid):
 	send_msg(msg)
 
 def handle_put(msg):
-	global commitIndex, log
+	global commitIndex, log, currentTerm
 	'''
 	log=[{'term': 0, "action": None, "value": None}]
 	{"src": "<ID>", 
