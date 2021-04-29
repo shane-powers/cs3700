@@ -82,6 +82,7 @@ def append_entries_rpc(term, leaderId, prevLogIndex, prevLogTerm, entries, leade
 	else: #log[prevLogIndex] == prevLogTerm: # TODO CATCH ERROR OUT OF BOUNDS INDEX
 		for entry in entries:
 			STORE[entry["key"]] = entry["value"]
+			log.append(entry)
 		msg = {'src': my_id, 'dst': leaderId, 'type': 'AppendEntriesResponse', 'nextIndex': len(log), "term":currentTerm, "leader": currentLeader, 'success': True}
 		send_msg(msg)
 		currentLeader = leaderId
@@ -216,7 +217,7 @@ def send_append_entries_for_replica(rid):
 	else:
 		entries = [log[next_index_dict[rid]]]
 
-	follow_prev_log_index = max(0, next_index_dict[rid]-1)
+	follow_prev_log_index = max(0, min(next_index_dict[rid]-1, len(log)-1))
 
 	data = {
 		'term': currentTerm,
