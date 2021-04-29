@@ -195,18 +195,18 @@ def handle_get(msg):
 	else:
 		handle_redirect(msg)
 
-# def echo_put(entries):
-# 	global currentTerm, my_id, log, commitIndex
-# 	data = {
-# 		'term': currentTerm,
-# 		'leaderId': my_id,
-# 		'prevLogIndex': len(log) - 1,
-# 		'prevLogTerm': log[len(log)-1]['term'],
-# 		'entries': [entries],
-# 		'leaderCommit': commitIndex
-# 	}
-# 	msg = {'src': my_id, 'dst': "None", 'type': 'AppendEntries', "leader": currentLeader, 'data': data}
-# 	send_to_all(msg)
+def echo_put(entries):
+	global currentTerm, my_id, log, commitIndex
+	data = {
+		'term': currentTerm,
+		'leaderId': my_id,
+		'prevLogIndex': len(log) - 1,
+		'prevLogTerm': log[len(log)-1]['term'],
+		'entries': [entries],
+		'leaderCommit': commitIndex
+	}
+	msg = {'src': my_id, 'dst': "None", 'type': 'AppendEntries', "leader": currentLeader, 'data': data}
+	send_to_all(msg)
 
 def send_append_entries_for_replica(rid):
 	global currentTerm, my_id, log, commitIndex
@@ -236,8 +236,9 @@ def handle_put(msg):
 		commitIndex += 1
 		newLogEntry = {"term": currentTerm, "action": "PUT", "key":msg["key"], "value":msg["value"]}
 		log.append(newLogEntry)
-		for rid in replica_ids:
-			send_append_entries_for_replica(rid)
+		echo_put(newLogEntry)
+		# for rid in replica_ids:
+		# 	send_append_entries_for_replica(rid)
 		STORE[msg["key"]] = msg["value"]
 		reply = {'src': my_id, 'dst': msg["src"], "leader": currentLeader, 'type': 'ok', "MID": msg["MID"]} 
 		send_msg(reply)
