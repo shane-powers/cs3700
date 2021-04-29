@@ -216,7 +216,7 @@ def send_append_entries_for_replica(rid):
 	else:
 		entries = [log[next_index_dict[rid]]]
 
-	follow_prev_log_index = max(0, next_index_dict[rid]-1)
+	follow_prev_log_index = max(0, min(next_index_dict[rid]-1, len(log)-1))
 
 	data = {
 		'term': currentTerm,
