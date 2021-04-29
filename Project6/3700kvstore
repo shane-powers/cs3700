@@ -15,7 +15,7 @@ sock.connect(my_id)
 
 def get_random_timeout():
 	#Return value between 150 and 300 ms
-	return random.uniform(.15, .3)
+	return random.uniform(.2, 1)
 
 ############################# PERSISTENT STATE ON ALL SERVERS
 currentTerm = 0
@@ -244,6 +244,7 @@ while True:
 		
 
 	if clock-lastEvent > electionTimeout:
+		print(str(my_id) + " TIMED OUT. STARTING BECOMING CANDIDATE")
 		lastEvent = clock
 		if thisRole != "leader":
 			begin_election()
