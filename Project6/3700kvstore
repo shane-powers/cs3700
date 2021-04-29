@@ -74,7 +74,7 @@ def append_entries_rpc(term, leaderId, prevLogIndex, prevLogTerm, entries, leade
 	global log, my_id, lastEvent, currentLeader, currentTerm
 	lastEvent = time.time()  
 	#print(str(my_id) + " RECEIVED APPEND ENTRIES FROM " + str(leaderId))
-	if term < currentTerm: # or log[prevLogIndex] != prevLogTerm: # TODO CATCH ERROR OUT OF BOUNDS INDEX
+	if prevLogIndex >= len(log) or term < currentTerm or prevLogTerm != log[prevLogIndex]["term"]:
 		msg = {'src': my_id, 'dst': leaderId, 'type': 'AppendEntriesResponse', 'nextIndex': len(log), "term":currentTerm, "leader": currentLeader, 'success': False}
 		send_msg(msg)
 		return
@@ -179,6 +179,7 @@ def handle_redirect(msg):
 	msg = {'src': my_id, 'dst': msg["src"], "leader": currentLeader, 'type': 'redirect', 'MID': msg["MID"]}
 	send_msg(msg)
 
+
 def handle_get(msg):
 	global commitIndex, log
 	if(thisRole == "leader"):
@@ -195,18 +196,18 @@ def handle_get(msg):
 	else:
 		handle_redirect(msg)
 
-def echo_put(entries):
-	global currentTerm, my_id, log, commitIndex
-	data = {
-		'term': currentTerm,
-		'leaderId': my_id,
-		'prevLogIndex': len(log) - 1,
-		'prevLogTerm': log[len(log)-1]['term'],
-		'entries': [entries],
-		'leaderCommit': commitIndex
-	}
-	msg = {'src': my_id, 'dst': "None", 'type': 'AppendEntries', "leader": currentLeader, 'data': data}
-	send_to_all(msg)
+# def echo_put(entries):
+# 	global currentTerm, my_id, log, commitIndex
+# 	data = {
+# 		'term': currentTerm,
+# 		'leaderId': my_id,
+# 		'prevLogIndex': len(log) - 1,
+# 		'prevLogTerm': log[len(log)-1]['term'],
+# 		'entries': [entries],
+# 		'leaderCommit': commitIndex
+# 	}
+# 	msg = {'src': my_id, 'dst': "None", 'type': 'AppendEntries', "leader": currentLeader, 'data': data}
+# 	send_to_all(msg)
 
 def send_append_entries_for_replica(rid):
 	global currentTerm, my_id, log, commitIndex
@@ -236,10 +237,13 @@ def handle_put(msg):
 		commitIndex += 1
 		newLogEntry = {"term": currentTerm, "action": "PUT", "key":msg["key"], "value":msg["value"]}
 		log.append(newLogEntry)
-		echo_put(newLogEntry)
-		# for rid in replica_ids:
-		# 	send_append_entries_for_replica(rid)
+		
+		for rid in replica_ids:
+			send_append_entries_for_replica(rid)
 		STORE[msg["key"]] = msg["value"]
+
+
+
 		reply = {'src': my_id, 'dst': msg["src"], "leader": currentLeader, 'type': 'ok', "MID": msg["MID"]} 
 		send_msg(reply)
 	else:
