@@ -79,6 +79,8 @@ def append_entries_rpc(term, leaderId, prevLogIndex, prevLogTerm, entries, leade
 		return
 	
 	else: #log[prevLogIndex] == prevLogTerm: # TODO CATCH ERROR OUT OF BOUNDS INDEX
+		for entry in entries:
+			STORE[entry["key"]] = entry["value"]
 		msg = {'src': my_id, 'dst': leaderId, 'type': 'AppendEntriesResponse', "leader": currentLeader, 'success': True}
 		send_msg(msg)
 		currentLeader = leaderId
@@ -147,9 +149,9 @@ def handle_append_entries(msg):
 	data = msg['data']
 	append_entries_rpc(data["term"], data["leaderId"], data["prevLogIndex"], data["prevLogTerm"], data["entries"], data["leaderCommit"])
 
-def handle_append_entries_response(msg):
-	if(msg["success"] != True):
-		print(str(my_id) + " received !!!!!!!!!!!!!!!!!!!!!!!!!!!! BAD APPEND ENTRIES RESPONSE FROM " + str(msg["src"]))
+# def handle_append_entries_response(msg):
+# 	if(msg["success"] != True):
+# 		print(str(my_id) + " received !!!!!!!!!!!!!!!!!!!!!!!!!!!! BAD APPEND ENTRIES RESPONSE FROM " + str(msg["src"]))
 
 # goodResponse = {}
 # def handle_append_entries_response(msg):
@@ -169,9 +171,6 @@ def handle_redirect(msg):
 def handle_get(msg):
 	global commitIndex, log
 	if(thisRole == "leader"):
-		commitIndex += 1
-		newLogEntry = {"term": currentTerm, "action": "GET", "key":msg["key"], "value":None}
-		log.append(newLogEntry)
 		response = STORE[msg['key']] # will be a value or 'None'	
 		if response:
 			reply = {'src': my_id, 'dst': msg["src"], "leader": currentLeader, 'type': 'ok', "MID": msg["MID"], "value": response} 
@@ -233,8 +232,8 @@ while True:
 		elif msg['type'] == "AppendEntries":
 			handle_append_entries(msg)
 
-		elif msg['type'] == "AppendEntriesResponse":
-			handle_append_entries_response(msg)
+		# elif msg['type'] == "AppendEntriesResponse":
+		# 	handle_append_entries_response(msg)
 
 	clock = time.time()
 
