@@ -216,11 +216,13 @@ def send_append_entries_for_replica(rid):
 	else:
 		entries = [log[next_index_dict[rid]]]
 
+	follow_prev_log_index = max(0, next_index_dict[rid]-1)
+
 	data = {
 		'term': currentTerm,
 		'leaderId': my_id,
-		'prevLogIndex': next_index_dict[rid]-1,
-		'prevLogTerm': log[next_index_dict[rid]-1]["term"],
+		'prevLogIndex': follow_prev_log_index,
+		'prevLogTerm': log[follow_prev_log_index]["term"],
 		'entries': entries,
 		'leaderCommit': commitIndex,
 	}
