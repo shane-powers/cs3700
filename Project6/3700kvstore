@@ -113,7 +113,7 @@ def begin_election():
 	#Change role to candidate
 	thisRole = "candidate"
 	#issues request vote to each of other servers
-	print(str(my_id) + " BECAME A CANDIDATE AND INCREASED ITS TERM. CURRENT TERM: " + str(currentTerm))
+	#print(str(my_id) + " BECAME A CANDIDATE AND INCREASED ITS TERM. CURRENT TERM: " + str(currentTerm))
 	votedFor = my_id
 	data = {
 		'term': currentTerm,
@@ -126,7 +126,7 @@ def begin_election():
 
 def make_self_leader():
 	global thisRole, currentLeader, receivedVotes
-	print(str(my_id) + " MADE ITSELF A LEADER")
+	#print(str(my_id) + " MADE ITSELF A LEADER")
 	thisRole = "leader"
 	currentLeader = my_id
 	receivedVotes = []
@@ -161,7 +161,7 @@ def handle_append_entries(msg):
 # 	global thisRole, goodResponse
 	
 # 	if thisRole == "leader":
-# 		goodResponse[currentTerm].append()
+# 		goodResponse[currentTerm].append(msg["src"])
 # 	if len(goodResponse[currentTerm]) > len(replica_ids)/2.0:
 # 			print("enough good responses")
 # 	else:
