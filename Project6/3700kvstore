@@ -83,12 +83,14 @@ def request_vote_rpc(term, candidateId, lastLogIndex, lastLogTerm):
 		return
 	elif votedFor == None or votedFor == candidateId:
 		#grant vote
+		currentTerm = term
 		votedFor = candidateId
 		msg = {'src': my_id, 'dst': candidateId, 'type': 'RequestVoteResponse', "leader": currentLeader, 'data': True}
 		#print(str(my_id) + " VOTED FOR " + str(candidateId))
 		send_msg(msg)
 		return
 	else:
+		currentTerm = term
 		msg = {'src': my_id, 'dst': candidateId, 'type': 'RequestVoteResponse', "leader": currentLeader, 'data': False}
 		#print(str(my_id) + " DID NOT VOTE FOR " + str(candidateId))
 		send_msg(msg)
@@ -162,7 +164,7 @@ def begin_election():
 	#print(str(msg))
 
 def make_self_leader():
-	global thisRole, currentLeader, receivedVotes
+	global thisRole, currentLeader, receivedVotes, currentTerm
 	#print(str(my_id) + " BECAME A LEADER")
 	thisRole = "leader"
 	currentLeader = my_id
@@ -170,6 +172,15 @@ def make_self_leader():
 	for rid in replica_ids:
 		next_index_dict[rid] = len(log)
 	sendHeartbeat()
+
+def give_up_leader(term, newLeader):
+	global thisRole, currentLeader, next_index_dict
+	thisRole = "follower"
+	next_index_dict = {}
+	currentLeader = newLeader
+	currentTerm = term
+	lastEvent = time.time()
+	
 
 ############################# HANDLE RECEIVED MESSAGE METHODS
 def handle_request_vote(msg):
@@ -183,23 +194,38 @@ def handle_request_vote_response(msg):
 			receivedVotes.append(msg['src'])
 		if len(receivedVotes) > len(replica_ids)/2.0:
 			make_self_leader() # TODO BE PREPARED TO HANDLE NOT GETTING HERE
+	elif thisRole == "leader":
+		if currentTerm < msg["term"]:
+			give_up_leader(msg["term"], msg["leader"])
+			return
+	else:
+		if msg["term"] > currentTerm:
+			leader = msg["leader"]
+			currentTerm = msg["term"]
 
 def handle_append_entries(msg):
 	global thisRole
 	if thisRole != "follower":
-		thisRole = "follower"
+		if thisRole == "leader":
+			give_up_leader(msg["term"], msg["leader"])
+		else:
+			thisRole = "follower"
 	data = msg['data']
 	append_entries_rpc(data["term"], data["leaderId"], data["prevLogIndex"], data["prevLogTerm"], data["entries"], data["leaderCommit"])
 
 def handle_append_entries_response(msg):
-	if currentTerm < msg['term']:
-		#GIVE UP LEADER AND ALLOW ELECTION TO START
-		return
-	elif msg['success'] == False:
-		next_index_dict[msg["src"]] = msg["nextIndex"]
-	elif msg['success'] == True:
-		#success true
-		next_index_dict[msg["src"]] = min(len(log), msg["nextIndex"])
+	if thisRole == "leader":
+		if currentTerm < msg['term']:
+			give_up_leader(msg['term'], msg["leader"])
+			return
+		elif msg['success'] == False:
+			next_index_dict[msg["src"]] = msg["nextIndex"]
+		elif msg['success'] == True:
+			#success true
+			next_index_dict[msg["src"]] = min(len(log), msg["nextIndex"])
+	else:
+		currentLeader = msg["leader"]
+		currentTerm = msg["term"]
 
 def handle_redirect(msg):
 	#print(str(my_id) + " is redirecting to client")
