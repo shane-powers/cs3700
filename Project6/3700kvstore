@@ -77,7 +77,7 @@ def send_to_all(msg):
 def request_vote_rpc(term, candidateId, lastLogIndex, lastLogTerm):
 	global currentTerm, votedFor
 	if term < currentTerm:
-		msg = {'src': my_id, 'dst': candidateId, 'type': 'RequestVoteResponse', "leader": currentLeader,'term':currentTerm, 'data': False}
+		msg = {'src': my_id, 'dst': candidateId, 'type': 'RequestVoteResponse', "leader": currentLeader, 'data': False}
 		#print(str(my_id) + " DID NOT VOTE FOR " + str(candidateId))
 		send_msg(msg)
 		return
@@ -85,13 +85,13 @@ def request_vote_rpc(term, candidateId, lastLogIndex, lastLogTerm):
 		#grant vote
 		currentTerm = term
 		votedFor = candidateId
-		msg = {'src': my_id, 'dst': candidateId, 'type': 'RequestVoteResponse', "leader": currentLeader,'term':currentTerm, 'data': True}
+		msg = {'src': my_id, 'dst': candidateId, 'type': 'RequestVoteResponse', "leader": currentLeader, 'data': True}
 		#print(str(my_id) + " VOTED FOR " + str(candidateId))
 		send_msg(msg)
 		return
 	else:
 		currentTerm = term
-		msg = {'src': my_id, 'dst': candidateId, 'type': 'RequestVoteResponse', "leader": currentLeader,'term':currentTerm, 'data': False}
+		msg = {'src': my_id, 'dst': candidateId, 'type': 'RequestVoteResponse', "leader": currentLeader, 'data': False}
 		#print(str(my_id) + " DID NOT VOTE FOR " + str(candidateId))
 		send_msg(msg)
 		return
@@ -194,14 +194,7 @@ def handle_request_vote_response(msg):
 			receivedVotes.append(msg['src'])
 		if len(receivedVotes) > len(replica_ids)/2.0:
 			make_self_leader() # TODO BE PREPARED TO HANDLE NOT GETTING HERE
-	elif thisRole == "leader":
-		if currentTerm < msg["term"]:
-			give_up_leader(msg["term"], msg["leader"])
-			return
-	else:
-		if msg["term"] > currentTerm:
-			leader = msg["leader"]
-			currentTerm = msg["term"]
+	
 
 def handle_append_entries(msg):
 	global thisRole
