@@ -150,10 +150,10 @@ def handle_append_entries(msg):
 def handle_append_entries_response(msg):
 	global currentTerm, next_index_dict, currentLeader
 	if thisRole == "leader":
-		if currentTerm < msg['term']:
-			give_up_leader(msg['term'], msg["leader"])
-			return
-		elif msg['success'] == False:
+		# if currentTerm < msg['term']:
+		# 	give_up_leader(msg['term'], msg["leader"])
+		# 	return
+		if msg['success'] == False:
 			next_index_dict[msg["src"]] = msg["nextIndex"]
 		elif msg['success'] == True:
 			#success true
