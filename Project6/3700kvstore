@@ -84,7 +84,7 @@ def append_entries_rpc(term, leaderId, prevLogIndex, prevLogTerm, entries, leade
 		msg = {'src': my_id, 'dst': leaderId, 'type': 'AppendEntriesResponse', "leader": currentLeader, 'success': True}
 		send_msg(msg)
 		currentLeader = leaderId
-		currentTerm = msg["term"]
+		currentTerm = term
 		return
 	if(leaderCommit > commitIndex):
 		commitIndex = min(leaderCommit, len(log)-1)
@@ -174,7 +174,10 @@ def handle_redirect(msg):
 def handle_get(msg):
 	global commitIndex, log
 	if(thisRole == "leader"):
-		response = STORE[msg['key']] # will be a value or 'None'	
+		try:
+			response = STORE[msg['key']] # will be a value or 'None'
+		except:
+			response = None	
 		if response:
 			reply = {'src': my_id, 'dst': msg["src"], "leader": currentLeader, 'type': 'ok', "MID": msg["MID"], "value": response} 
 			send_msg(reply)
