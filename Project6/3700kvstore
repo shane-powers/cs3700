@@ -273,7 +273,7 @@ while True:
 
 	clock = time.time()
 
-	if clock-lastEvent > electionTimeout/2 and thisRole == "leader":
+	if clock-lastEvent > .5 and thisRole == "leader":
 		lastEvent = clock
 		sendHeartbeat()
 		
