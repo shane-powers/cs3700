@@ -15,7 +15,7 @@ sock.connect(my_id)
 
 def get_random_timeout():
 	#Return value between 150 and 300 ms
-	return random.uniform(1, 3)
+	return random.uniform(.15, .3)
 
 ############################# PERSISTENT STATE ON ALL SERVERS
 currentTerm = 0
@@ -124,6 +124,7 @@ def begin_election():
 
 def make_self_leader():
 	global thisRole, currentLeader, receivedVotes
+	print(str(my_id) + " MADE ITSELF A LEADER")
 	thisRole = "leader"
 	currentLeader = my_id
 	receivedVotes = []
