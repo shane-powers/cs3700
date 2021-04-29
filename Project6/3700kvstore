@@ -270,10 +270,10 @@ def send_append_entries_for_replica(rid):
 	global currentTerm, my_id, log, commitIndex
 	#to_append = {'term': current_term, 'leaderId': leader,
 	#'prevLogIndex': next_index[rid] - 1, 'prevLogTerm': log[next_index[rid] - 1]['term'], 'leaderCommit': commit_idx}
-	if next_index_dict[rid] > len(log):
+	if next_index_dict[rid] >= len(log):
 		entries = []
 	else:
-		entries = [log[next_index_dict[rid] + 1]]
+		entries = [log[next_index_dict[rid]]]
 
 	data = {
 		'term': currentTerm,
