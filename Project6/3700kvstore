@@ -391,7 +391,7 @@ while True:
 
 	if clock-lastEvent > electionTimeout:
 		lastEvent = clock
-		if thisRole != "leader":
+		if thisRole == "follower":
 			begin_election()
 			
 
